@@ -1,124 +1,506 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -n -A100 -B20 "function runProviderDynamicModel" /app/dist/provider-runtime-CLQOjLJ6.js
+grep -R -n -A100 -B30 "resolveDynamicModel" \
+  /app/dist \
+  /app/node_modules/@openclaw \
+  2>/dev/null | head -n 500
 '
-52-const testing = {
-53-	clearProviderRuntimePluginCacheForTest,
-54-	resetExternalAuthFallbackWarningCacheForTest
-55-};
-56-function resolveProviderPluginsForCatalogHooks(params) {
-57-	const workspaceDir = params.workspaceDir ?? getActivePluginRegistryWorkspaceDirFromState();
-58-	const env = params.env ?? process.env;
-59-	const onlyPluginIds = resolveCatalogHookProviderPluginIds({
-60-		config: params.config,
-61-		workspaceDir,
-62-		env
-63-	});
-64-	if (onlyPluginIds.length === 0) return [];
-65-	return resolveProviderPluginsForHooks({
-66-		...params,
-67-		workspaceDir,
-68-		env,
-69-		onlyPluginIds
-70-	});
-71-}
-72:function runProviderDynamicModel(params) {
-73-	return resolveProviderRuntimePlugin(params)?.resolveDynamicModel?.(params.context) ?? void 0;
-74-}
-75-function resolveProviderSystemPromptContribution(params) {
-76-	const plugin = ensureProviderRuntimePluginHandle(params).plugin;
-77-	const baseOverlay = resolveGpt5SystemPromptContribution({
-78-		config: params.context.config ?? params.config,
-79-		providerId: params.context.provider ?? params.provider,
-80-		modelId: params.context.modelId,
-81-		trigger: params.context.trigger
-82-	});
-83-	return mergeProviderSystemPromptContributions(mergeProviderSystemPromptContributions(baseOverlay, plugin?.resolvePromptOverlay?.({
-84-		...params.context,
-85-		baseOverlay
-86-	}) ?? void 0), plugin?.resolveSystemPromptContribution?.(params.context) ?? void 0);
-87-}
-88-function mergeProviderSystemPromptContributions(base, override) {
-89-	if (!base) return override;
-90-	if (!override) return base;
-91-	const stablePrefix = mergeUniquePromptSections(base.stablePrefix, override.stablePrefix);
-92-	const dynamicSuffix = mergeUniquePromptSections(base.dynamicSuffix, override.dynamicSuffix);
-93-	return {
-94-		...stablePrefix ? { stablePrefix } : {},
-95-		...dynamicSuffix ? { dynamicSuffix } : {},
-96-		sectionOverrides: {
-97-			...base.sectionOverrides,
-98-			...override.sectionOverrides
-99-		}
-100-	};
-101-}
-102-function mergeUniquePromptSections(...sections) {
-103-	const uniqueSections = uniqueStrings(sections.filter((section) => Boolean(section?.trim())));
-104-	return uniqueSections.length > 0 ? uniqueSections.join("\n\n") : void 0;
-105-}
-106-function transformProviderSystemPrompt(params) {
-107-	const plugin = ensureProviderRuntimePluginHandle(params).plugin;
-108-	const textTransforms = mergePluginTextTransforms(resolveRuntimeTextTransforms(), plugin?.textTransforms);
-109-	return applyPluginTextReplacements(plugin?.transformSystemPrompt?.(params.context) ?? params.context.systemPrompt, textTransforms?.input);
-110-}
-111-function resolveProviderTextTransforms(params) {
-112-	return mergePluginTextTransforms(resolveRuntimeTextTransforms(), ensureProviderRuntimePluginHandle(params).plugin?.textTransforms);
-113-}
-114-async function prepareProviderDynamicModel(params) {
-115-	await resolveProviderRuntimePlugin(params)?.prepareDynamicModel?.(params.context);
-116-}
-117-function shouldPreferProviderRuntimeResolvedModel(params) {
-118-	return resolveProviderRuntimePlugin(params)?.preferRuntimeResolvedModel?.(params.context) ?? false;
-119-}
-120-function normalizeProviderResolvedModelWithPlugin(params) {
-121-	return resolveProviderRuntimePlugin({
-122-		...params,
-123-		modelId: params.context.modelId
-124-	})?.normalizeResolvedModel?.(params.context) ?? void 0;
-125-}
-126-function applyProviderResolvedTransportWithPlugin(params) {
-127-	const normalized = normalizeProviderTransportWithPlugin({
-128-		provider: params.provider,
-129-		config: params.config,
-130-		workspaceDir: params.workspaceDir,
-131-		env: params.env,
-132-		modelId: params.context.modelId,
-133-		context: {
-134-			provider: params.context.provider,
-135-			modelId: params.context.modelId,
-136-			api: params.context.model.api,
-137-			baseUrl: params.context.model.baseUrl
-138-		}
-139-	});
-140-	if (!normalized) return;
-141-	const nextApi = normalized.api ?? params.context.model.api;
-142-	const nextBaseUrl = normalized.baseUrl ?? params.context.model.baseUrl;
-143-	if (nextApi === params.context.model.api && nextBaseUrl === params.context.model.baseUrl) return;
-144-	return {
-145-		...params.context.model,
-146-		api: nextApi,
-147-		baseUrl: nextBaseUrl
-148-	};
-149-}
-150-function normalizeProviderModelIdWithPlugin(params) {
-151-	return normalizeOptionalString(resolveProviderHookPlugin(params)?.normalizeModelId?.(params.context)) ?? normalizeProviderModelIdWithManifest(params);
-152-}
-153-function normalizeProviderTransportWithPlugin(params) {
-154-	const hasTransportChange = (normalized) => (normalized.api ?? params.context.api) !== params.context.api || (normalized.baseUrl ?? params.context.baseUrl) !== params.context.baseUrl;
-155-	const matchedPlugin = resolveProviderHookPlugin(params);
-156-	const normalizedMatched = matchedPlugin?.normalizeTransport?.(params.context);
-157-	if (normalizedMatched && hasTransportChange(normalizedMatched)) return normalizedMatched;
-158-	if (hasConfiguredModelProvider(params)) return;
-159-	for (const candidate of resolveProviderPluginsForHooks(params)) {
-160-		if (!candidate.normalizeTransport || candidate === matchedPlugin) continue;
-161-		const normalized = candidate.normalizeTransport(params.context);
-162-		if (normalized && hasTransportChange(normalized)) return normalized;
-163-	}
-164-}
-165-function normalizeProviderConfigWithPlugin(params) {
-166-	const hasConfigChange = (normalized) => normalized !== params.context.providerConfig;
-167-	const bundledSurface = resolveBundledProviderPolicySurface(params.provider);
-168-	if (bundledSurface?.normalizeConfig) {
-169-		const normalized = bundledSurface.normalizeConfig(params.context);
-170-		return normalized && hasConfigChange(normalized) ? normalized : void 0;
-171-	}
-172-	if (!hasExplicitProviderRuntimePluginActivation(params)) return;
+/app/dist/provider-registration-DMO2cT-w.js-211-		},
+/app/dist/provider-registration-DMO2cT-w.js-212-		run: createOAuthHandler(region)
+/app/dist/provider-registration-DMO2cT-w.js-213-	};
+/app/dist/provider-registration-DMO2cT-w.js-214-}
+/app/dist/provider-registration-DMO2cT-w.js-215-function buildMinimaxApiProviderPlugin() {
+/app/dist/provider-registration-DMO2cT-w.js-216-	return {
+/app/dist/provider-registration-DMO2cT-w.js-217-		id: API_PROVIDER_ID,
+/app/dist/provider-registration-DMO2cT-w.js-218-		label: PROVIDER_LABEL,
+/app/dist/provider-registration-DMO2cT-w.js-219-		hookAliases: ["minimax-cn"],
+/app/dist/provider-registration-DMO2cT-w.js-220-		docsPath: "/providers/minimax",
+/app/dist/provider-registration-DMO2cT-w.js-221-		envVars: ["MINIMAX_API_KEY"],
+/app/dist/provider-registration-DMO2cT-w.js-222-		auth: [createMinimaxApiKeyMethod("global"), createMinimaxApiKeyMethod("cn")],
+/app/dist/provider-registration-DMO2cT-w.js-223-		catalog: {
+/app/dist/provider-registration-DMO2cT-w.js-224-			order: "simple",
+/app/dist/provider-registration-DMO2cT-w.js-225-			run: async (ctx) => resolveApiCatalog(ctx)
+/app/dist/provider-registration-DMO2cT-w.js-226-		},
+/app/dist/provider-registration-DMO2cT-w.js-227-		staticCatalog: {
+/app/dist/provider-registration-DMO2cT-w.js-228-			order: "simple",
+/app/dist/provider-registration-DMO2cT-w.js-229-			run: async (ctx) => ({ providers: { [API_PROVIDER_ID]: buildMinimaxProvider(ctx.env) } })
+/app/dist/provider-registration-DMO2cT-w.js-230-		},
+/app/dist/provider-registration-DMO2cT-w.js-231-		resolveUsageAuth: async (ctx) => {
+/app/dist/provider-registration-DMO2cT-w.js-232-			const portalOauth = await ctx.resolveOAuthToken({ provider: PORTAL_PROVIDER_ID });
+/app/dist/provider-registration-DMO2cT-w.js-233-			if (portalOauth) return portalOauth;
+/app/dist/provider-registration-DMO2cT-w.js-234-			const apiKey = ctx.resolveApiKeyFromConfigAndStore({
+/app/dist/provider-registration-DMO2cT-w.js-235-				providerIds: [API_PROVIDER_ID, PORTAL_PROVIDER_ID],
+/app/dist/provider-registration-DMO2cT-w.js-236-				envDirect: MINIMAX_USAGE_ENV_VAR_KEYS.map((name) => ctx.env[name])
+/app/dist/provider-registration-DMO2cT-w.js-237-			});
+/app/dist/provider-registration-DMO2cT-w.js-238-			return apiKey ? { token: apiKey } : null;
+/app/dist/provider-registration-DMO2cT-w.js-239-		},
+/app/dist/provider-registration-DMO2cT-w.js-240-		...MINIMAX_PROVIDER_HOOKS,
+/app/dist/provider-registration-DMO2cT-w.js:241:		resolveDynamicModel: (ctx) => resolveMinimaxDynamicModel({
+/app/dist/provider-registration-DMO2cT-w.js-242-			providerId: API_PROVIDER_ID,
+/app/dist/provider-registration-DMO2cT-w.js-243-			ctx
+/app/dist/provider-registration-DMO2cT-w.js-244-		}),
+/app/dist/provider-registration-DMO2cT-w.js-245-		isModernModelRef: ({ modelId }) => isMiniMaxModernModelId(modelId),
+/app/dist/provider-registration-DMO2cT-w.js-246-		fetchUsageSnapshot: async (ctx) => await fetchMinimaxUsage(ctx.token, ctx.timeoutMs, ctx.fetchFn, { baseUrl: resolveMinimaxUsageBaseUrl(ctx.config) })
+/app/dist/provider-registration-DMO2cT-w.js-247-	};
+/app/dist/provider-registration-DMO2cT-w.js-248-}
+/app/dist/provider-registration-DMO2cT-w.js-249-function buildMinimaxPortalProviderPlugin() {
+/app/dist/provider-registration-DMO2cT-w.js-250-	return {
+/app/dist/provider-registration-DMO2cT-w.js-251-		id: PORTAL_PROVIDER_ID,
+/app/dist/provider-registration-DMO2cT-w.js-252-		label: PROVIDER_LABEL,
+/app/dist/provider-registration-DMO2cT-w.js-253-		hookAliases: ["minimax-portal-cn"],
+/app/dist/provider-registration-DMO2cT-w.js-254-		docsPath: "/providers/minimax",
+/app/dist/provider-registration-DMO2cT-w.js-255-		envVars: ["MINIMAX_OAUTH_TOKEN", "MINIMAX_API_KEY"],
+/app/dist/provider-registration-DMO2cT-w.js-256-		catalog: { run: async (ctx) => resolvePortalCatalog(ctx) },
+/app/dist/provider-registration-DMO2cT-w.js-257-		staticCatalog: { run: async (ctx) => ({ providers: { [PORTAL_PROVIDER_ID]: buildMinimaxPortalProvider(ctx.env) } }) },
+/app/dist/provider-registration-DMO2cT-w.js-258-		auth: [createMinimaxOAuthMethod("global"), createMinimaxOAuthMethod("cn")],
+/app/dist/provider-registration-DMO2cT-w.js-259-		...MINIMAX_PROVIDER_HOOKS,
+/app/dist/provider-registration-DMO2cT-w.js:260:		resolveDynamicModel: (ctx) => resolveMinimaxDynamicModel({
+/app/dist/provider-registration-DMO2cT-w.js-261-			providerId: PORTAL_PROVIDER_ID,
+/app/dist/provider-registration-DMO2cT-w.js-262-			ctx
+/app/dist/provider-registration-DMO2cT-w.js-263-		}),
+/app/dist/provider-registration-DMO2cT-w.js-264-		isModernModelRef: ({ modelId }) => isMiniMaxModernModelId(modelId)
+/app/dist/provider-registration-DMO2cT-w.js-265-	};
+/app/dist/provider-registration-DMO2cT-w.js-266-}
+/app/dist/provider-registration-DMO2cT-w.js-267-function registerMinimaxProviders(api) {
+/app/dist/provider-registration-DMO2cT-w.js-268-	api.registerProvider(buildMinimaxApiProviderPlugin());
+/app/dist/provider-registration-DMO2cT-w.js-269-	api.registerProvider(buildMinimaxPortalProviderPlugin());
+/app/dist/provider-registration-DMO2cT-w.js-270-}
+/app/dist/provider-registration-DMO2cT-w.js-271-//#endregion
+/app/dist/provider-registration-DMO2cT-w.js-272-export { registerMinimaxProviders as t };
+--
+/app/dist/openai-provider--d3ekh0L.js-993-							provider: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-994-							cfg: ctx.config,
+/app/dist/openai-provider--d3ekh0L.js-995-							...ctx.agentDir ? { agentDir: ctx.agentDir } : {},
+/app/dist/openai-provider--d3ekh0L.js-996-							...runtimeAuth.profileId ?? auth.profileId ? { profileId: runtimeAuth.profileId ?? auth.profileId } : {}
+/app/dist/openai-provider--d3ekh0L.js-997-						});
+/app/dist/openai-provider--d3ekh0L.js-998-						const provider = await buildOpenAICodexLiveProviderConfig({
+/app/dist/openai-provider--d3ekh0L.js-999-							discoveryApiKey: runtimeAuth.apiKey,
+/app/dist/openai-provider--d3ekh0L.js-1000-							accountId: metadata.accountId
+/app/dist/openai-provider--d3ekh0L.js-1001-						});
+/app/dist/openai-provider--d3ekh0L.js-1002-						return { providers: { [PROVIDER_ID]: provider } };
+/app/dist/openai-provider--d3ekh0L.js-1003-					}
+/app/dist/openai-provider--d3ekh0L.js-1004-				} catch {}
+/app/dist/openai-provider--d3ekh0L.js-1005-				if (auth.mode === "api_key" && auth.apiKey) return { providers: { [PROVIDER_ID]: await buildOpenAILiveProviderConfig({
+/app/dist/openai-provider--d3ekh0L.js-1006-					apiKey: auth.apiKey,
+/app/dist/openai-provider--d3ekh0L.js-1007-					baseUrl: resolveOpenAICatalogBaseUrl(ctx),
+/app/dist/openai-provider--d3ekh0L.js-1008-					discoveryApiKey: auth.discoveryApiKey
+/app/dist/openai-provider--d3ekh0L.js-1009-				}) } };
+/app/dist/openai-provider--d3ekh0L.js-1010-				const apiKey = ctx.resolveProviderApiKey(PROVIDER_ID);
+/app/dist/openai-provider--d3ekh0L.js-1011-				if (!apiKey.apiKey) return null;
+/app/dist/openai-provider--d3ekh0L.js-1012-				return { providers: { [PROVIDER_ID]: await buildOpenAILiveProviderConfig({
+/app/dist/openai-provider--d3ekh0L.js-1013-					apiKey: apiKey.apiKey,
+/app/dist/openai-provider--d3ekh0L.js-1014-					baseUrl: resolveOpenAICatalogBaseUrl(ctx),
+/app/dist/openai-provider--d3ekh0L.js-1015-					discoveryApiKey: apiKey.discoveryApiKey
+/app/dist/openai-provider--d3ekh0L.js-1016-				}) } };
+/app/dist/openai-provider--d3ekh0L.js-1017-			}
+/app/dist/openai-provider--d3ekh0L.js-1018-		},
+/app/dist/openai-provider--d3ekh0L.js-1019-		staticCatalog: {
+/app/dist/openai-provider--d3ekh0L.js-1020-			order: "simple",
+/app/dist/openai-provider--d3ekh0L.js-1021-			run: async () => ({ providers: { [PROVIDER_ID]: OPENAI_MANIFEST_PROVIDER } })
+/app/dist/openai-provider--d3ekh0L.js-1022-		},
+/app/dist/openai-provider--d3ekh0L.js:1023:		resolveDynamicModel: (ctx) => shouldResolveDynamicModelThroughCodex(ctx) ? codexHooks.resolveDynamicModel?.(ctx) : resolveOpenAIGptForwardCompatModel(ctx),
+/app/dist/openai-provider--d3ekh0L.js-1024-		preferRuntimeResolvedModel: (ctx) => codexHooks.preferRuntimeResolvedModel?.(ctx) ?? false,
+/app/dist/openai-provider--d3ekh0L.js-1025-		normalizeResolvedModel: (ctx) => {
+/app/dist/openai-provider--d3ekh0L.js-1026-			if (!isOpenAIProvider(ctx.provider)) return;
+/app/dist/openai-provider--d3ekh0L.js-1027-			if (shouldUseCodexResponsesHooks({
+/app/dist/openai-provider--d3ekh0L.js-1028-				provider: ctx.provider,
+/app/dist/openai-provider--d3ekh0L.js-1029-				api: ctx.model.api,
+/app/dist/openai-provider--d3ekh0L.js-1030-				baseUrl: ctx.model.baseUrl
+/app/dist/openai-provider--d3ekh0L.js-1031-			})) return codexHooks.normalizeResolvedModel?.(ctx);
+/app/dist/openai-provider--d3ekh0L.js-1032-			return normalizeOpenAITransport(ctx.model);
+/app/dist/openai-provider--d3ekh0L.js-1033-		},
+/app/dist/openai-provider--d3ekh0L.js-1034-		normalizeTransport: (ctx) => {
+/app/dist/openai-provider--d3ekh0L.js-1035-			if (shouldUseCodexResponsesHooks(ctx)) return codexHooks.normalizeTransport?.(ctx);
+/app/dist/openai-provider--d3ekh0L.js-1036-			return shouldUseOpenAIResponsesTransport(ctx) ? {
+/app/dist/openai-provider--d3ekh0L.js-1037-				api: "openai-responses",
+/app/dist/openai-provider--d3ekh0L.js-1038-				baseUrl: ctx.baseUrl
+/app/dist/openai-provider--d3ekh0L.js-1039-			} : void 0;
+/app/dist/openai-provider--d3ekh0L.js-1040-		},
+/app/dist/openai-provider--d3ekh0L.js-1041-		...responsesHooks,
+/app/dist/openai-provider--d3ekh0L.js-1042-		prepareExtraParams: (ctx) => {
+/app/dist/openai-provider--d3ekh0L.js-1043-			const providerConfig = ctx.config?.models?.providers?.[PROVIDER_ID];
+/app/dist/openai-provider--d3ekh0L.js-1044-			return (shouldUseCodexResponsesHooks({
+/app/dist/openai-provider--d3ekh0L.js-1045-				provider: ctx.provider,
+/app/dist/openai-provider--d3ekh0L.js-1046-				api: ctx.model?.api,
+/app/dist/openai-provider--d3ekh0L.js-1047-				baseUrl: ctx.model?.baseUrl
+/app/dist/openai-provider--d3ekh0L.js-1048-			}) || normalizeProviderId(ctx.provider) === PROVIDER_ID && (!providerConfig?.baseUrl || isOpenAIApiBaseUrl(providerConfig.baseUrl)) && resolveConfiguredAuthTransport({
+/app/dist/openai-provider--d3ekh0L.js-1049-				config: ctx.config,
+/app/dist/openai-provider--d3ekh0L.js-1050-				providerConfig
+/app/dist/openai-provider--d3ekh0L.js-1051-			}) === "codex" ? codexResponsesHooks : responsesHooks).prepareExtraParams?.(ctx);
+/app/dist/openai-provider--d3ekh0L.js-1052-		},
+/app/dist/openai-provider--d3ekh0L.js-1053-		resolveUsageAuth: codexHooks.resolveUsageAuth,
+/app/dist/openai-provider--d3ekh0L.js-1054-		fetchUsageSnapshot: codexHooks.fetchUsageSnapshot,
+/app/dist/openai-provider--d3ekh0L.js-1055-		refreshOAuth: codexHooks.refreshOAuth,
+/app/dist/openai-provider--d3ekh0L.js-1056-		buildUnknownModelHint: ({ modelId }) => buildOpenAIUnknownModelHint(modelId),
+/app/dist/openai-provider--d3ekh0L.js-1057-		buildMissingAuthMessage: (ctx) => {
+/app/dist/openai-provider--d3ekh0L.js-1058-			if (normalizeProviderId(ctx.provider) !== PROVIDER_ID) return;
+/app/dist/openai-provider--d3ekh0L.js-1059-			if (ctx.listProfileIds(PROVIDER_ID).length === 0) return;
+/app/dist/openai-provider--d3ekh0L.js-1060-			return `No API key found for provider "openai". You are authenticated with OpenAI ChatGPT/Codex OAuth. Use ${OPENAI_CODEX_DEFAULT_MODEL} with the ChatGPT/Codex OAuth profile, or set OPENAI_API_KEY for direct OpenAI API access.`;
+/app/dist/openai-provider--d3ekh0L.js-1061-		},
+/app/dist/openai-provider--d3ekh0L.js-1062-		matchesContextOverflowError: ({ errorMessage }) => /content_filter.*(?:prompt|input).*(?:too long|exceed)/i.test(errorMessage),
+/app/dist/openai-provider--d3ekh0L.js-1063-		resolveReasoningOutputMode: () => "native",
+/app/dist/openai-provider--d3ekh0L.js-1064-		resolveThinkingProfile: ({ provider, modelId, agentRuntime, compat }) => normalizeProviderId(provider) === PROVIDER_ID ? resolveUnifiedOpenAIThinkingProfile(modelId, agentRuntime, compat) : null,
+/app/dist/openai-provider--d3ekh0L.js-1065-		isModernModelRef: ({ modelId }) => matchesExactOrPrefix(modelId, OPENAI_MODERN_MODEL_IDS),
+/app/dist/openai-provider--d3ekh0L.js-1066-		augmentModelCatalog: (ctx) => {
+/app/dist/openai-provider--d3ekh0L.js-1067-			const openAiGpt55ProTemplate = findCatalogTemplate({
+/app/dist/openai-provider--d3ekh0L.js-1068-				entries: ctx.entries,
+/app/dist/openai-provider--d3ekh0L.js-1069-				providerId: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-1070-				templateIds: OPENAI_GPT_55_PRO_TEMPLATE_MODEL_IDS
+/app/dist/openai-provider--d3ekh0L.js-1071-			});
+/app/dist/openai-provider--d3ekh0L.js-1072-			const openAiGpt54Template = findCatalogTemplate({
+/app/dist/openai-provider--d3ekh0L.js-1073-				entries: ctx.entries,
+/app/dist/openai-provider--d3ekh0L.js-1074-				providerId: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-1075-				templateIds: OPENAI_GPT_54_TEMPLATE_MODEL_IDS
+/app/dist/openai-provider--d3ekh0L.js-1076-			});
+/app/dist/openai-provider--d3ekh0L.js-1077-			const openAiGpt54ProTemplate = findCatalogTemplate({
+/app/dist/openai-provider--d3ekh0L.js-1078-				entries: ctx.entries,
+/app/dist/openai-provider--d3ekh0L.js-1079-				providerId: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-1080-				templateIds: OPENAI_GPT_54_PRO_TEMPLATE_MODEL_IDS
+/app/dist/openai-provider--d3ekh0L.js-1081-			});
+/app/dist/openai-provider--d3ekh0L.js-1082-			const openAiGpt54MiniTemplate = findCatalogTemplate({
+/app/dist/openai-provider--d3ekh0L.js-1083-				entries: ctx.entries,
+/app/dist/openai-provider--d3ekh0L.js-1084-				providerId: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-1085-				templateIds: OPENAI_GPT_54_MINI_TEMPLATE_MODEL_IDS
+/app/dist/openai-provider--d3ekh0L.js-1086-			});
+/app/dist/openai-provider--d3ekh0L.js-1087-			const openAiGpt54NanoTemplate = findCatalogTemplate({
+/app/dist/openai-provider--d3ekh0L.js-1088-				entries: ctx.entries,
+/app/dist/openai-provider--d3ekh0L.js-1089-				providerId: PROVIDER_ID,
+/app/dist/openai-provider--d3ekh0L.js-1090-				templateIds: OPENAI_GPT_54_NANO_TEMPLATE_MODEL_IDS
+/app/dist/openai-provider--d3ekh0L.js-1091-			});
+/app/dist/openai-provider--d3ekh0L.js-1092-			return [
+/app/dist/openai-provider--d3ekh0L.js-1093-				buildOpenAISyntheticCatalogEntry(openAiGpt55ProTemplate, {
+/app/dist/openai-provider--d3ekh0L.js-1094-					id: OPENAI_GPT_55_PRO_MODEL_ID,
+/app/dist/openai-provider--d3ekh0L.js-1095-					reasoning: true,
+/app/dist/openai-provider--d3ekh0L.js-1096-					input: ["text", "image"],
+/app/dist/openai-provider--d3ekh0L.js-1097-					contextWindow: OPENAI_GPT_55_PRO_CONTEXT_TOKENS
+/app/dist/openai-provider--d3ekh0L.js-1098-				}),
+/app/dist/openai-provider--d3ekh0L.js-1099-				buildOpenAISyntheticCatalogEntry(openAiGpt54Template, {
+/app/dist/openai-provider--d3ekh0L.js-1100-					id: OPENAI_GPT_54_MODEL_ID,
+/app/dist/openai-provider--d3ekh0L.js-1101-					reasoning: true,
+/app/dist/openai-provider--d3ekh0L.js-1102-					input: ["text", "image"],
+/app/dist/openai-provider--d3ekh0L.js-1103-					contextWindow: OPENAI_GPT_54_CONTEXT_TOKENS
+/app/dist/openai-provider--d3ekh0L.js-1104-				}),
+/app/dist/openai-provider--d3ekh0L.js-1105-				buildOpenAISyntheticCatalogEntry(openAiGpt54ProTemplate, {
+/app/dist/openai-provider--d3ekh0L.js-1106-					id: OPENAI_GPT_54_PRO_MODEL_ID,
+/app/dist/openai-provider--d3ekh0L.js-1107-					reasoning: true,
+/app/dist/openai-provider--d3ekh0L.js-1108-					input: ["text", "image"],
+/app/dist/openai-provider--d3ekh0L.js-1109-					contextWindow: OPENAI_GPT_54_PRO_CONTEXT_TOKENS
+/app/dist/openai-provider--d3ekh0L.js-1110-				}),
+/app/dist/openai-provider--d3ekh0L.js-1111-				buildOpenAISyntheticCatalogEntry(openAiGpt54MiniTemplate, {
+/app/dist/openai-provider--d3ekh0L.js-1112-					id: OPENAI_GPT_54_MINI_MODEL_ID,
+/app/dist/openai-provider--d3ekh0L.js-1113-					reasoning: true,
+/app/dist/openai-provider--d3ekh0L.js-1114-					input: ["text", "image"],
+/app/dist/openai-provider--d3ekh0L.js-1115-					contextWindow: OPENAI_GPT_54_MINI_CONTEXT_TOKENS
+/app/dist/openai-provider--d3ekh0L.js-1116-				}),
+/app/dist/openai-provider--d3ekh0L.js-1117-				buildOpenAISyntheticCatalogEntry(openAiGpt54NanoTemplate, {
+/app/dist/openai-provider--d3ekh0L.js-1118-					id: OPENAI_GPT_54_NANO_MODEL_ID,
+/app/dist/openai-provider--d3ekh0L.js-1119-					reasoning: true,
+/app/dist/openai-provider--d3ekh0L.js-1120-					input: ["text", "image"],
+/app/dist/openai-provider--d3ekh0L.js-1121-					contextWindow: OPENAI_GPT_54_NANO_CONTEXT_TOKENS
+/app/dist/openai-provider--d3ekh0L.js-1122-				})
+/app/dist/openai-provider--d3ekh0L.js-1123-			].filter((entry) => entry !== void 0);
+--
+/app/dist/model-wpoKGSDF.js-702-			kind: "resolved",
+/app/dist/model-wpoKGSDF.js-703-			source: "configured",
+/app/dist/model-wpoKGSDF.js-704-			model: normalizeResolvedModel({
+/app/dist/model-wpoKGSDF.js-705-				provider,
+/app/dist/model-wpoKGSDF.js-706-				cfg,
+/app/dist/model-wpoKGSDF.js-707-				agentDir,
+/app/dist/model-wpoKGSDF.js-708-				workspaceDir,
+/app/dist/model-wpoKGSDF.js-709-				model: {
+/app/dist/model-wpoKGSDF.js-710-					...fallbackInlineMatch,
+/app/dist/model-wpoKGSDF.js-711-					reasoning: resolveConfiguredModelReasoning({
+/app/dist/model-wpoKGSDF.js-712-						provider,
+/app/dist/model-wpoKGSDF.js-713-						compat: fallbackInlineMatch.compat,
+/app/dist/model-wpoKGSDF.js-714-						reasoning: fallbackInlineMatch.reasoning
+/app/dist/model-wpoKGSDF.js-715-					}),
+/app/dist/model-wpoKGSDF.js-716-					...resolvedParams ? { params: resolvedParams } : {},
+/app/dist/model-wpoKGSDF.js-717-					...requestTimeoutMs !== void 0 ? { requestTimeoutMs } : {}
+/app/dist/model-wpoKGSDF.js-718-				},
+/app/dist/model-wpoKGSDF.js-719-				runtimeHooks
+/app/dist/model-wpoKGSDF.js-720-			})
+/app/dist/model-wpoKGSDF.js-721-		};
+/app/dist/model-wpoKGSDF.js-722-	}
+/app/dist/model-wpoKGSDF.js-723-	if (fallbackInlineMatch) return;
+/app/dist/model-wpoKGSDF.js-724-	if (shouldSuppressBuiltInModel({
+/app/dist/model-wpoKGSDF.js-725-		provider,
+/app/dist/model-wpoKGSDF.js-726-		id: modelId,
+/app/dist/model-wpoKGSDF.js-727-		...cfg ? { config: cfg } : {},
+/app/dist/model-wpoKGSDF.js-728-		...providerConfig?.baseUrl ? { baseUrl: providerConfig.baseUrl } : {},
+/app/dist/model-wpoKGSDF.js-729-		...workspaceDir ? { workspaceDir } : {}
+/app/dist/model-wpoKGSDF.js-730-	})) return { kind: "suppressed" };
+/app/dist/model-wpoKGSDF.js-731-}
+/app/dist/model-wpoKGSDF.js:732:function resolveDynamicModelAuthProfile(params) {
+/app/dist/model-wpoKGSDF.js-733-	const explicitProfileId = params.authProfileId?.trim() || void 0;
+/app/dist/model-wpoKGSDF.js-734-	const store = ensureAuthProfileStore(params.agentDir, { allowKeychainPrompt: false });
+/app/dist/model-wpoKGSDF.js-735-	if (explicitProfileId) {
+/app/dist/model-wpoKGSDF.js-736-		const credential = store.profiles[explicitProfileId];
+/app/dist/model-wpoKGSDF.js-737-		const configuredMode = params.cfg?.auth?.profiles?.[explicitProfileId]?.mode;
+/app/dist/model-wpoKGSDF.js-738-		return {
+/app/dist/model-wpoKGSDF.js-739-			authProfileId: explicitProfileId,
+/app/dist/model-wpoKGSDF.js-740-			...credential?.type || configuredMode ? { authProfileMode: credential?.type ?? configuredMode } : {}
+/app/dist/model-wpoKGSDF.js-741-		};
+/app/dist/model-wpoKGSDF.js-742-	}
+/app/dist/model-wpoKGSDF.js-743-	const profileId = [...new Set(listOpenAIAuthProfileProvidersForAgentRuntime({
+/app/dist/model-wpoKGSDF.js-744-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-745-		config: params.cfg
+/app/dist/model-wpoKGSDF.js-746-	}).flatMap((provider) => resolveAuthProfileOrder({
+/app/dist/model-wpoKGSDF.js-747-		cfg: params.cfg,
+/app/dist/model-wpoKGSDF.js-748-		store,
+/app/dist/model-wpoKGSDF.js-749-		provider,
+/app/dist/model-wpoKGSDF.js-750-		preferredProfile: params.preferredProfile
+/app/dist/model-wpoKGSDF.js-751-	})))][0];
+/app/dist/model-wpoKGSDF.js-752-	if (!profileId) return {};
+/app/dist/model-wpoKGSDF.js-753-	const credential = store.profiles[profileId];
+/app/dist/model-wpoKGSDF.js-754-	const configuredMode = params.cfg?.auth?.profiles?.[profileId]?.mode;
+/app/dist/model-wpoKGSDF.js-755-	return {
+/app/dist/model-wpoKGSDF.js-756-		authProfileId: profileId,
+/app/dist/model-wpoKGSDF.js-757-		...credential?.type || configuredMode ? { authProfileMode: credential?.type ?? configuredMode } : {}
+/app/dist/model-wpoKGSDF.js-758-	};
+/app/dist/model-wpoKGSDF.js-759-}
+/app/dist/model-wpoKGSDF.js-760-function resolvePluginDynamicModelWithRegistry(params) {
+/app/dist/model-wpoKGSDF.js-761-	const { provider, modelId, modelRegistry, cfg, agentDir, workspaceDir } = params;
+/app/dist/model-wpoKGSDF.js-762-	const runtimeHooks = params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-763-	const providerConfig = resolveConfiguredProviderConfig(cfg, provider);
+/app/dist/model-wpoKGSDF.js-764-	const agentHarnessPolicy = resolveAgentHarnessPolicy({
+/app/dist/model-wpoKGSDF.js-765-		provider,
+/app/dist/model-wpoKGSDF.js-766-		modelId,
+/app/dist/model-wpoKGSDF.js-767-		config: cfg
+/app/dist/model-wpoKGSDF.js-768-	});
+/app/dist/model-wpoKGSDF.js-769-	const agentRuntimeId = agentHarnessPolicy.runtimeSource !== "implicit" || cfg?.plugins?.entries?.codex?.enabled === true ? agentHarnessPolicy.runtime : void 0;
+/app/dist/model-wpoKGSDF.js:770:	const authProfile = resolveDynamicModelAuthProfile({
+/app/dist/model-wpoKGSDF.js-771-		provider,
+/app/dist/model-wpoKGSDF.js-772-		cfg,
+/app/dist/model-wpoKGSDF.js-773-		agentDir,
+/app/dist/model-wpoKGSDF.js-774-		authProfileId: params.authProfileId,
+/app/dist/model-wpoKGSDF.js-775-		preferredProfile: params.preferredProfile
+/app/dist/model-wpoKGSDF.js-776-	});
+/app/dist/model-wpoKGSDF.js-777-	const preferDiscoveredModelMetadata = shouldCompareProviderRuntimeResolvedModel({
+/app/dist/model-wpoKGSDF.js-778-		provider,
+/app/dist/model-wpoKGSDF.js-779-		modelId,
+/app/dist/model-wpoKGSDF.js-780-		cfg,
+/app/dist/model-wpoKGSDF.js-781-		agentDir,
+/app/dist/model-wpoKGSDF.js-782-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-783-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-784-	});
+/app/dist/model-wpoKGSDF.js-785-	const pluginDynamicModel = runtimeHooks.runProviderDynamicModel({
+/app/dist/model-wpoKGSDF.js-786-		provider,
+/app/dist/model-wpoKGSDF.js-787-		config: cfg,
+/app/dist/model-wpoKGSDF.js-788-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-789-		context: {
+/app/dist/model-wpoKGSDF.js-790-			config: cfg,
+/app/dist/model-wpoKGSDF.js-791-			agentDir,
+/app/dist/model-wpoKGSDF.js-792-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-793-			...agentRuntimeId ? { agentRuntimeId } : {},
+/app/dist/model-wpoKGSDF.js-794-			provider,
+/app/dist/model-wpoKGSDF.js-795-			modelId,
+/app/dist/model-wpoKGSDF.js-796-			modelRegistry,
+/app/dist/model-wpoKGSDF.js-797-			providerConfig,
+/app/dist/model-wpoKGSDF.js-798-			...authProfile
+/app/dist/model-wpoKGSDF.js-799-		}
+/app/dist/model-wpoKGSDF.js-800-	});
+/app/dist/model-wpoKGSDF.js-801-	if (!pluginDynamicModel) return;
+/app/dist/model-wpoKGSDF.js-802-	return normalizeResolvedModel({
+/app/dist/model-wpoKGSDF.js-803-		provider,
+/app/dist/model-wpoKGSDF.js-804-		cfg,
+/app/dist/model-wpoKGSDF.js-805-		agentDir,
+/app/dist/model-wpoKGSDF.js-806-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-807-		model: applyConfiguredProviderOverrides({
+/app/dist/model-wpoKGSDF.js-808-			provider,
+/app/dist/model-wpoKGSDF.js-809-			discoveredModel: pluginDynamicModel,
+/app/dist/model-wpoKGSDF.js-810-			providerConfig,
+/app/dist/model-wpoKGSDF.js-811-			modelId,
+/app/dist/model-wpoKGSDF.js-812-			cfg,
+/app/dist/model-wpoKGSDF.js-813-			runtimeHooks,
+/app/dist/model-wpoKGSDF.js-814-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-815-			preferDiscoveredModelMetadata
+/app/dist/model-wpoKGSDF.js-816-		}),
+/app/dist/model-wpoKGSDF.js-817-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-818-	});
+/app/dist/model-wpoKGSDF.js-819-}
+/app/dist/model-wpoKGSDF.js-820-function resolveRuntimePreferredSuppressedModel(params) {
+/app/dist/model-wpoKGSDF.js-821-	const runtimeHooks = params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-822-	if (!shouldCompareProviderRuntimeResolvedModel({
+/app/dist/model-wpoKGSDF.js-823-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-824-		modelId: params.modelId,
+/app/dist/model-wpoKGSDF.js-825-		cfg: params.cfg,
+/app/dist/model-wpoKGSDF.js-826-		agentDir: params.agentDir,
+/app/dist/model-wpoKGSDF.js-827-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-828-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-829-	})) return;
+/app/dist/model-wpoKGSDF.js-830-	return resolvePluginDynamicModelWithRegistry({
+/app/dist/model-wpoKGSDF.js-831-		...params,
+/app/dist/model-wpoKGSDF.js-832-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-833-	});
+/app/dist/model-wpoKGSDF.js-834-}
+/app/dist/model-wpoKGSDF.js-835-function shouldDropRuntimePreferredExplicitMiss(params) {
+/app/dist/model-wpoKGSDF.js-836-	return params.explicitModel.kind === "resolved" && params.explicitModel.source === "registry" && params.explicitModel.dropOnRuntimeMiss;
+/app/dist/model-wpoKGSDF.js-837-}
+/app/dist/model-wpoKGSDF.js-838-function resolveConfiguredFallbackModel(params) {
+/app/dist/model-wpoKGSDF.js-839-	const { provider, modelId, cfg, agentDir, workspaceDir, runtimeHooks } = params;
+/app/dist/model-wpoKGSDF.js-840-	const providerConfig = resolveConfiguredProviderConfig(cfg, provider);
+/app/dist/model-wpoKGSDF.js-841-	const requestTimeoutMs = resolveProviderRequestTimeoutMs(providerConfig?.timeoutSeconds);
+/app/dist/model-wpoKGSDF.js-842-	const configuredModel = findConfiguredProviderModel(providerConfig, provider, modelId);
+/app/dist/model-wpoKGSDF.js-843-	if (!hasConfiguredFallbackSurface({
+/app/dist/model-wpoKGSDF.js-844-		providerConfig,
+/app/dist/model-wpoKGSDF.js-845-		configuredModel,
+/app/dist/model-wpoKGSDF.js-846-		modelId
+/app/dist/model-wpoKGSDF.js-847-	})) return;
+/app/dist/model-wpoKGSDF.js-848-	const staticCatalogModel = resolveBundledStaticCatalogModel({
+/app/dist/model-wpoKGSDF.js-849-		provider,
+/app/dist/model-wpoKGSDF.js-850-		modelId,
+/app/dist/model-wpoKGSDF.js-851-		cfg,
+/app/dist/model-wpoKGSDF.js-852-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-853-		includeRuntimeDiscovery: true
+/app/dist/model-wpoKGSDF.js-854-	});
+/app/dist/model-wpoKGSDF.js-855-	const metadataModel = configuredModel ?? staticCatalogModel;
+/app/dist/model-wpoKGSDF.js-856-	const fallbackCompat = mergeModelCompat(staticCatalogModel?.compat, configuredModel?.compat);
+/app/dist/model-wpoKGSDF.js-857-	const fallbackMediaInput = mergeModelMediaInput(staticCatalogModel?.mediaInput, configuredModel?.mediaInput);
+/app/dist/model-wpoKGSDF.js-858-	const providerHeaders = sanitizeModelHeaders(providerConfig?.headers, { stripSecretRefMarkers: true });
+/app/dist/model-wpoKGSDF.js-859-	const providerRequest = sanitizeConfiguredModelProviderRequest(providerConfig?.request);
+/app/dist/model-wpoKGSDF.js-860-	const staticCatalogHeaders = sanitizeModelHeaders(staticCatalogModel?.headers, { stripSecretRefMarkers: true });
+/app/dist/model-wpoKGSDF.js-861-	const modelHeaders = sanitizeModelHeaders(configuredModel?.headers, { stripSecretRefMarkers: true });
+/app/dist/model-wpoKGSDF.js-862-	const resolvedParams = mergeConfiguredRuntimeModelParams({
+/app/dist/model-wpoKGSDF.js-863-		cfg,
+/app/dist/model-wpoKGSDF.js-864-		provider,
+/app/dist/model-wpoKGSDF.js-865-		modelId,
+/app/dist/model-wpoKGSDF.js-866-		discoveredParams: staticCatalogModel?.params,
+/app/dist/model-wpoKGSDF.js-867-		providerParams: providerConfig?.params,
+/app/dist/model-wpoKGSDF.js-868-		configuredParams: configuredModel?.params
+/app/dist/model-wpoKGSDF.js-869-	});
+/app/dist/model-wpoKGSDF.js-870-	const providerConfiguredApi = normalizeResolvedTransportApi(providerConfig?.api);
+--
+/app/dist/model-wpoKGSDF.js-1116-		const suppressedRuntimeModel = resolveRuntimePreferredSuppressedModel({
+/app/dist/model-wpoKGSDF.js-1117-			provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1118-			modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1119-			modelRegistry,
+/app/dist/model-wpoKGSDF.js-1120-			cfg,
+/app/dist/model-wpoKGSDF.js-1121-			agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1122-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-1123-			authProfileId: options?.authProfileId,
+/app/dist/model-wpoKGSDF.js-1124-			preferredProfile: options?.preferredProfile,
+/app/dist/model-wpoKGSDF.js-1125-			runtimeHooks
+/app/dist/model-wpoKGSDF.js-1126-		});
+/app/dist/model-wpoKGSDF.js-1127-		if (suppressedRuntimeModel) return {
+/app/dist/model-wpoKGSDF.js-1128-			model: suppressedRuntimeModel,
+/app/dist/model-wpoKGSDF.js-1129-			authStorage,
+/app/dist/model-wpoKGSDF.js-1130-			modelRegistry
+/app/dist/model-wpoKGSDF.js-1131-		};
+/app/dist/model-wpoKGSDF.js-1132-		return {
+/app/dist/model-wpoKGSDF.js-1133-			error: buildUnknownModelError({
+/app/dist/model-wpoKGSDF.js-1134-				provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1135-				modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1136-				cfg,
+/app/dist/model-wpoKGSDF.js-1137-				agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1138-				workspaceDir,
+/app/dist/model-wpoKGSDF.js-1139-				runtimeHooks
+/app/dist/model-wpoKGSDF.js-1140-			}),
+/app/dist/model-wpoKGSDF.js-1141-			authStorage,
+/app/dist/model-wpoKGSDF.js-1142-			modelRegistry
+/app/dist/model-wpoKGSDF.js-1143-		};
+/app/dist/model-wpoKGSDF.js-1144-	}
+/app/dist/model-wpoKGSDF.js-1145-	const providerConfig = resolveConfiguredProviderConfig(cfg, normalizedRef.provider);
+/app/dist/model-wpoKGSDF.js:1146:	const authProfile = resolveDynamicModelAuthProfile({
+/app/dist/model-wpoKGSDF.js-1147-		provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1148-		cfg,
+/app/dist/model-wpoKGSDF.js-1149-		agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1150-		authProfileId: options?.authProfileId,
+/app/dist/model-wpoKGSDF.js-1151-		preferredProfile: options?.preferredProfile
+/app/dist/model-wpoKGSDF.js-1152-	});
+/app/dist/model-wpoKGSDF.js-1153-	let staticCatalogLookup;
+/app/dist/model-wpoKGSDF.js-1154-	const resolveStaticCatalogModel = async () => {
+/app/dist/model-wpoKGSDF.js-1155-		if (!options?.allowBundledStaticCatalogFallback) return;
+/app/dist/model-wpoKGSDF.js-1156-		staticCatalogLookup ??= (async () => {
+/app/dist/model-wpoKGSDF.js-1157-			const manifestModel = resolveBundledStaticCatalogModel({
+/app/dist/model-wpoKGSDF.js-1158-				provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1159-				modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1160-				cfg,
+/app/dist/model-wpoKGSDF.js-1161-				workspaceDir
+/app/dist/model-wpoKGSDF.js-1162-			});
+/app/dist/model-wpoKGSDF.js-1163-			if (manifestModel) return manifestModel;
+/app/dist/model-wpoKGSDF.js-1164-			return await resolveBundledProviderStaticCatalogModel({
+/app/dist/model-wpoKGSDF.js-1165-				provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1166-				modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1167-				cfg,
+/app/dist/model-wpoKGSDF.js-1168-				workspaceDir
+/app/dist/model-wpoKGSDF.js-1169-			});
+/app/dist/model-wpoKGSDF.js-1170-		})();
+/app/dist/model-wpoKGSDF.js-1171-		return await staticCatalogLookup;
+/app/dist/model-wpoKGSDF.js-1172-	};
+/app/dist/model-wpoKGSDF.js-1173-	const resolveStaticCatalogFallbackModel = async () => {
+/app/dist/model-wpoKGSDF.js-1174-		const catalogModel = await resolveStaticCatalogModel();
+/app/dist/model-wpoKGSDF.js-1175-		if (!catalogModel) return;
+/app/dist/model-wpoKGSDF.js-1176-		const overriddenStaticCatalogModel = applyConfiguredProviderOverrides({
+/app/dist/model-wpoKGSDF.js-1177-			provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1178-			discoveredModel: catalogModel,
+/app/dist/model-wpoKGSDF.js-1179-			providerConfig,
+/app/dist/model-wpoKGSDF.js-1180-			modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1181-			cfg,
+/app/dist/model-wpoKGSDF.js-1182-			runtimeHooks,
+/app/dist/model-wpoKGSDF.js-1183-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-1184-			preferDiscoveredModelMetadata: true,
+/app/dist/model-wpoKGSDF.js-1185-			preferDiscoveredTransport: options?.preferBundledStaticCatalogTransport
+/app/dist/model-wpoKGSDF.js-1186-		});
+/app/dist/model-wpoKGSDF.js-1187-		return normalizeResolvedModel({
+/app/dist/model-wpoKGSDF.js-1188-			provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1189-			cfg,
+/app/dist/model-wpoKGSDF.js-1190-			agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1191-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-1192-			model: overriddenStaticCatalogModel,
+/app/dist/model-wpoKGSDF.js-1193-			runtimeHooks
+/app/dist/model-wpoKGSDF.js-1194-		});
+/app/dist/model-wpoKGSDF.js-1195-	};
+/app/dist/model-wpoKGSDF.js-1196-	const resolveDynamicAttempt = async () => {
+/app/dist/model-wpoKGSDF.js-1197-		await runtimeHooks.prepareProviderDynamicModel({
+/app/dist/model-wpoKGSDF.js-1198-			provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1199-			config: cfg,
+/app/dist/model-wpoKGSDF.js-1200-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-1201-			context: {
+/app/dist/model-wpoKGSDF.js-1202-				config: cfg,
+/app/dist/model-wpoKGSDF.js-1203-				agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1204-				workspaceDir,
+/app/dist/model-wpoKGSDF.js-1205-				provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1206-				modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1207-				modelRegistry,
+/app/dist/model-wpoKGSDF.js-1208-				providerConfig,
+/app/dist/model-wpoKGSDF.js-1209-				...authProfile
+/app/dist/model-wpoKGSDF.js-1210-			}
+/app/dist/model-wpoKGSDF.js-1211-		});
+/app/dist/model-wpoKGSDF.js-1212-		return resolveModelWithRegistry({
+/app/dist/model-wpoKGSDF.js-1213-			provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1214-			modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1215-			modelRegistry,
+/app/dist/model-wpoKGSDF.js-1216-			cfg,
+/app/dist/model-wpoKGSDF.js-1217-			agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1218-			workspaceDir,
+/app/dist/model-wpoKGSDF.js-1219-			authProfileId: options?.authProfileId,
+/app/dist/model-wpoKGSDF.js-1220-			preferredProfile: options?.preferredProfile,
+/app/dist/model-wpoKGSDF.js-1221-			runtimeHooks,
+/app/dist/model-wpoKGSDF.js-1222-			...options?.allowBundledStaticCatalogFallback ? { skipConfiguredFallback: true } : {}
+/app/dist/model-wpoKGSDF.js-1223-		});
+/app/dist/model-wpoKGSDF.js-1224-	};
+/app/dist/model-wpoKGSDF.js-1225-	const providerRuntimeMetadataShouldWin = shouldCompareProviderRuntimeResolvedModel({
+/app/dist/model-wpoKGSDF.js-1226-		provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1227-		modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1228-		cfg,
+/app/dist/model-wpoKGSDF.js-1229-		agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1230-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-1231-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-1232-	});
+/app/dist/model-wpoKGSDF.js-1233-	let model = explicitModel?.kind === "resolved" && !providerRuntimeMetadataShouldWin ? explicitModel.model : void 0;
+/app/dist/model-wpoKGSDF.js-1234-	model ??= await resolveDynamicAttempt();
+/app/dist/model-wpoKGSDF.js-1235-	if (!model && !explicitModel && options?.retryTransientProviderRuntimeMiss) model = await resolveDynamicAttempt();
+/app/dist/model-wpoKGSDF.js-1236-	if (!model && !explicitModel && options?.allowBundledStaticCatalogFallback) model = await resolveStaticCatalogFallbackModel();
+/app/dist/model-wpoKGSDF.js-1237-	if (!model && !explicitModel && options?.allowBundledStaticCatalogFallback) model = resolveConfiguredFallbackModel({
+/app/dist/model-wpoKGSDF.js-1238-		provider: normalizedRef.provider,
+/app/dist/model-wpoKGSDF.js-1239-		modelId: normalizedRef.model,
+/app/dist/model-wpoKGSDF.js-1240-		cfg,
+/app/dist/model-wpoKGSDF.js-1241-		agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-1242-		workspaceDir,
+/app/dist/model-wpoKGSDF.js-1243-		runtimeHooks
+/app/dist/model-wpoKGSDF.js-1244-	});
+/app/dist/model-wpoKGSDF.js-1245-	if (model && options?.allowBundledStaticCatalogFallback) {
+/app/dist/model-wpoKGSDF.js-1246-		const staticMediaInput = (await resolveStaticCatalogModel())?.mediaInput;
+--
+/app/dist/openai-chatgpt-provider-BfBZlMyL.js-425-		id: "oauth",
+/app/dist/openai-chatgpt-provider-BfBZlMyL.js-426-		label: OPENAI_CHATGPT_LOGIN_LABEL,
+/app/dist/openai-chatgpt-provider-BfBZlMyL.js-427-		hint: OPENAI_CHATGPT_LOGIN_HINT,
