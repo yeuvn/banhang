@@ -1,44 +1,66 @@
-aihome@AIHome:~$ cd /opt/aihome-test/source && \
-docker compose -f compose/openclaw.yml stop && \
-docker run --rm \
-  --volumes-from aihome-openclaw-test \
-  --entrypoint node \
-  ghcr.io/openclaw/openclaw:2026.7.1-2-slim \
-  -e '
-const fs=require("fs");
-const path=require("path");
-const root="/data/state";
-const ws="/home/node/.openclaw/workspace";
-const att=path.join(root,"workspace-attestations");
+aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
+set -e
+echo "=== MODEL STATUS ==="
+openclaw models status
 
-console.log("=== VERIFY WORKSPACE ===");
-console.log("workspace:",ws);
-console.log("entries:",fs.existsSync(ws)?fs.readdirSync(ws):["MISSING"]);
+echo
+echo "=== MODEL AUTH ==="
+openclaw models auth --help
 
-console.log("=== REMOVE STALE WORKSPACE ATTESTATION ===");
-if(fs.existsSync(att)){
-  for(const f of fs.readdirSync(att)){
-    const p=path.join(att,f);
-    if(f.endsWith(".attested")){
-      console.log("remove:",p);
-      fs.rmSync(p,{force:true});
-    }
-  }
-docker ps --filter name=aihome-openclaw-test --format "table {{.Names}}\t{{.Status}}"ith exactly: AIHOME_T
-[+] stop 1/1
- ✔ Container aihome-openclaw-test Stopped                                                             1.0s
-=== VERIFY WORKSPACE ===
-workspace: /home/node/.openclaw/workspace
-entries: []
-=== REMOVE STALE WORKSPACE ATTESTATION ===
-remove: /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested
-=== DONE ===
-Workspace data was empty; only stale attestation files were removed.
-[+] up 1/1
- ✔ Container aihome-openclaw-test Started                                                             1.1s
-=== WORKSPACE AFTER RECREATE ===
-total 8
-drwxrwxr-x 2 node node 4096 Sep  5 15:25 .
-drwx------ 3 node node 4096 Aug  4 07:45 ..
-=== FUNCTIONAL TEST ===
-GatewayClientRequestError: FailoverError: Unknown model: google/gemini-3.6-flash
+echo
+echo "=== CONFIG MODEL ==="
+grep -n -A5 -B3 "primary" /data/config/openclaw.json5
+'
+=== MODEL STATUS ===
+Config        : /data/config/openclaw.json5
+Agent dir     : /data/state/agents/main/agent
+Default       : google/gemini-3.6-flash
+Fallbacks (0) : -
+Image model   : -
+Image fallbacks (0): -
+Aliases (0)   : -
+Configured models (0): all
+
+Auth overview
+Auth store    : /data/state/agents/main/agent/openclaw-agent.sqlite
+Shell env     : off
+Providers w/ OAuth/tokens (0): -
+- google effective=env:AQ.Ab8RN...mgze6WVw | env=AQ.Ab8RN...mgze6WVw | source=env: GEMINI_API_KEY
+
+OAuth/token status
+- none
+
+=== MODEL AUTH ===
+
+OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
+
+Usage: openclaw models auth [options] [command]
+
+Manage model auth profiles
+
+Options:
+  --agent <id>          Agent id for auth commands
+  -h, --help            Display help for command
+
+Commands:
+  add                   Interactive auth helper (provider auth or paste token)
+  list                  List saved auth profiles
+  login                 Run a provider plugin auth flow (OAuth/API key)
+  login-github-copilot  Login to GitHub Copilot via GitHub device flow (TTY
+                        required)
+  order                 Manage per-agent auth profile order overrides
+  paste-api-key         Paste an API key into auth-profiles.json and update
+                        config
+  paste-token           Paste a token into auth-profiles.json and update config
+  setup-token           Run a provider CLI to create/sync a token (TTY required)
+
+=== CONFIG MODEL ===
+10-  agents: {
+11-    defaults: {
+12-      model: {
+13:        primary: "google/gemini-3.6-flash",
+14-        fallbacks: [],
+15-      },
+16-      skills: [],
+17-      subagents: {
+18-        maxConcurrent: 1,
