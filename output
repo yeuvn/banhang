@@ -1,37 +1,271 @@
 aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-node openclaw.mjs infer model --help 2>&1
-echo "===== HEALTH ====="
-node openclaw.mjs health --help 2>&1
-'
+set +e
+
+echo "================ VERSION ================"
+node openclaw.mjs --version 2>&1
+
+echo
+echo "================ HEALTH ================"
+node openclaw.mjs health --json 2>&1
+
+echo
+echo "================ MODEL RUN HELP ================"
+node openclaw.mjs infer model run --help 2>&1
+
+echo
+echo "================ MODEL LIST ================"
+node openclaw.mjs infer model list 2>&1
+
+echo
+echo "================ PROVIDERS ================"
+node openclaw.mjs infer model providers 2>&1
+
+echo
+echo "================ GOOGLE MODELS ================"
+node openclaw.mjs infer model list 2>&1 | grep -i -E "google|gemini" || true
+
+echo
+echo "================ CONFIG MODEL ================"
+node openclaw.mjs config get agents.defaults.model 2>&1
+
+echo
+echo "================ GATEWAY STATUS ================"
+'ode openclaw.mjs logs --help 2>&1 ================".*/=<set>/" 2>&1
+================ VERSION ================
+OpenClaw 2026.7.1
+
+================ HEALTH ================
+{
+  "ok": false,
+  "error": {
+    "type": "gateway_credentials_required",
+    "message": "Gateway is reachable, but this CLI has no token/password or paired device token for read-scope health RPCs."
+  },
+  "gateway": {
+    "reachable": true
+  }
+}
+
+================ MODEL RUN HELP ================
 
 OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
 
-Usage: openclaw infer model [options] [command]
+Usage: openclaw infer model run [options]
 
-Text inference and model catalog commands
+Run a one-shot model turn
 
 Options:
-  -h, --help  Display help for command
+  --file <path>             Image file (default: [])
+  --gateway                 Force gateway execution (default: false)
+  -h, --help                Display help for command
+  --json                    Output JSON (default: false)
+  --local                   Force local execution (default: false)
+  --model <provider/model>  Model override
+  --prompt <text>           Prompt text
+  --thinking <level>        Thinking level override
 
-Commands:
-  auth        Provider auth helpers
-  help        Display help for command
-  inspect     Inspect one model catalog entry
-  list        List known models
-  providers   List model providers from the catalog
-  run         Run a one-shot model turn
-===== HEALTH =====
+================ MODEL LIST ================
+{"id":"claude-fable-5","name":"Claude Fable 5","provider":"anthropic","api":"anthropic-messages","contextWindow":1000000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-haiku-4-5","name":"Claude Haiku 4.5","provider":"anthropic","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-haiku-4-5-20251001","name":"Claude Haiku 4.5","provider":"anthropic","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-mythos-5","name":"Claude Mythos 5","provider":"anthropic","api":"anthropic-messages","contextWindow":1000000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-6","name":"Claude Opus 4.6","provider":"anthropic","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-7","name":"Claude Opus 4.7","provider":"anthropic","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-8","name":"Claude Opus 4.8","provider":"anthropic","api":"anthropic-messages","contextWindow":1048576,"reasoning":true,"input":["text","image"]}
+{"id":"claude-sonnet-4-6","name":"Claude Sonnet 4.6","provider":"anthropic","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-sonnet-5","name":"Claude Sonnet 5","provider":"anthropic","api":"anthropic-messages","contextWindow":1000000,"reasoning":true,"input":["text","image"]}
+{"id":"glm-4-7-251222","name":"GLM 4.7","provider":"byteplus","api":"openai-completions","contextWindow":200000,"reasoning":false,"input":["text","image"]}
+{"id":"kimi-k2-5-260127","name":"Kimi K2.5","provider":"byteplus","api":"openai-completions","contextWindow":256000,"reasoning":true,"input":["text","image"]}
+{"id":"seed-1-8-251228","name":"Seed 1.8","provider":"byteplus","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text","image"]}
+{"id":"ark-code-latest","name":"Ark Coding Plan","provider":"byteplus-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"doubao-seed-code","name":"Doubao Seed Code","provider":"byteplus-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"glm-4.7","name":"GLM 4.7 Coding","provider":"byteplus-plan","api":"openai-completions","contextWindow":200000,"reasoning":false,"input":["text"]}
+{"id":"kimi-k2-thinking","name":"Kimi K2 Thinking","provider":"byteplus-plan","api":"openai-completions","contextWindow":256000,"reasoning":true,"input":["text"]}
+{"id":"kimi-k2.5","name":"Kimi K2.5 Coding","provider":"byteplus-plan","api":"openai-completions","contextWindow":256000,"reasoning":true,"input":["text"]}
+{"id":"claude-opus-4-6","name":"Claude Opus 4.6 (Claude CLI)","provider":"claude-cli","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-7","name":"Claude Opus 4.7 (Claude CLI)","provider":"claude-cli","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-8","name":"Claude Opus 4.8 (Claude CLI)","provider":"claude-cli","contextWindow":1048576,"reasoning":true,"input":["text","image"]}
+{"id":"claude-sonnet-4-6","name":"Claude Sonnet 4.6 (Claude CLI)","provider":"claude-cli","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-sonnet-5","name":"Claude Sonnet 5 (Claude CLI)","provider":"claude-cli","contextWindow":1000000,"reasoning":true,"input":["text","image"]}
+{"id":"command-a-03-2025","name":"Command A","provider":"cohere","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"],"compat":{"supportsStore":false,"supportsUsageInStreaming":false,"maxTokensField":"max_tokens"}}
+{"id":"claude-opus-4.6","name":"Claude Opus 4.6","provider":"github-copilot","api":"anthropic-messages","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"claude-opus-4.7","name":"Claude Opus 4.7","provider":"github-copilot","api":"anthropic-messages","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"claude-opus-4.8","name":"Claude Opus 4.8","provider":"github-copilot","api":"anthropic-messages","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"claude-sonnet-4.6","name":"Claude Sonnet 4.6","provider":"github-copilot","api":"anthropic-messages","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-2.5-pro","name":"Gemini 2.5 Pro","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-3-flash","name":"Gemini 3 Flash","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-3.1-pro","name":"Gemini 3.1 Pro","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"goldeneye","name":"Goldeneye","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text"]}
+{"id":"gpt-5.3-codex","name":"GPT-5.3-Codex","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":true,"input":["text"]}
+{"id":"gpt-5.4","name":"GPT-5.4","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4-mini","name":"GPT-5.4 mini","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4-nano","name":"GPT-5.4 nano","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.5","name":"GPT-5.5","provider":"github-copilot","api":"openai-responses","contextWindow":400000,"reasoning":true,"input":["text","image"]}
+{"id":"raptor-mini","name":"Raptor mini","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text"]}
+{"id":"muse-spark-1.1","name":"Muse Spark 1.1","provider":"meta","api":"openai-responses","contextWindow":1048576,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportsTools":true,"supportedReasoningEfforts":["minimal","low","medium","high","xhigh"]}}
+{"id":"codestral-latest","name":"Codestral (latest)","provider":"mistral","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"devstral-medium-latest","name":"Devstral 2 (latest)","provider":"mistral","api":"openai-completions","contextWindow":262144,"reasoning":false,"input":["text"]}
+{"id":"magistral-small","name":"Magistral Small","provider":"mistral","api":"openai-completions","contextWindow":128000,"reasoning":true,"input":["text"]}
+{"id":"mistral-large-latest","name":"Mistral Large (latest)","provider":"mistral","api":"openai-completions","contextWindow":262144,"reasoning":false,"input":["text","image"]}
+{"id":"mistral-medium-2508","name":"Mistral Medium 3.1","provider":"mistral","api":"openai-completions","contextWindow":262144,"reasoning":false,"input":["text","image"]}
+{"id":"mistral-medium-3-5","name":"Mistral Medium 3.5","provider":"mistral","api":"openai-completions","contextWindow":262144,"reasoning":true,"input":["text","image"]}
+{"id":"mistral-small-latest","name":"Mistral Small (latest)","provider":"mistral","api":"openai-completions","contextWindow":128000,"reasoning":true,"input":["text","image"]}
+{"id":"pixtral-large-latest","name":"Pixtral Large (latest)","provider":"mistral","api":"openai-completions","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"deepseek/deepseek-r1-0528","name":"DeepSeek R1 0528","provider":"novita","api":"openai-completions","contextWindow":163840,"reasoning":true,"input":["text"]}
+{"id":"deepseek/deepseek-v3-0324","name":"DeepSeek V3 0324","provider":"novita","api":"openai-completions","contextWindow":163840,"reasoning":false,"input":["text"]}
+{"id":"zai-org/glm-5","name":"GLM-5","provider":"novita","api":"openai-completions","contextWindow":202752,"reasoning":true,"input":["text"]}
+{"id":"moonshotai/kimi-k2.5","name":"Kimi K2.5","provider":"novita","api":"openai-completions","contextWindow":262144,"reasoning":true,"input":["text","image"]}
+{"id":"minimax/minimax-m2.7","name":"MiniMax M2.7","provider":"novita","api":"openai-completions","contextWindow":1000000,"reasoning":true,"input":["text"]}
+{"id":"qwen/qwen3-235b-a22b-fp8","name":"Qwen3 235B A22B FP8","provider":"novita","api":"openai-completions","contextWindow":262144,"reasoning":true,"input":["text"]}
+{"id":"z-ai/glm-5.1","name":"GLM 5.1","provider":"nvidia","api":"openai-completions","contextWindow":202752,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"z-ai/glm5","name":"GLM-5","provider":"nvidia","api":"openai-completions","contextWindow":202752,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"moonshotai/kimi-k2.5","name":"Kimi K2.5","provider":"nvidia","api":"openai-completions","contextWindow":262144,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"minimaxai/minimax-m2.5","name":"MiniMax M2.5","provider":"nvidia","api":"openai-completions","contextWindow":196608,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"minimaxai/minimax-m2.7","name":"Minimax M2.7","provider":"nvidia","api":"openai-completions","contextWindow":196608,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"nvidia/nemotron-3-super-120b-a12b","name":"NVIDIA Nemotron 3 Super 120B","provider":"nvidia","api":"openai-completions","contextWindow":1048576,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"nvidia/nemotron-3-ultra-550b-a55b","name":"NVIDIA Nemotron 3 Ultra 550B","provider":"nvidia","api":"openai-completions","contextWindow":1000000,"reasoning":false,"input":["text"],"compat":{"requiresStringContent":true}}
+{"id":"glm-5.1:cloud","name":"glm-5.1:cloud","provider":"ollama-cloud","api":"ollama","contextWindow":128000,"reasoning":true,"input":["text"],"compat":{"supportsUsageInStreaming":true,"supportsTools":true}}
+{"id":"glm-5.2:cloud","name":"glm-5.2:cloud","provider":"ollama-cloud","api":"ollama","contextWindow":1000000,"reasoning":true,"input":["text"],"compat":{"supportsUsageInStreaming":true,"supportsTools":true}}
+{"id":"kimi-k2.5:cloud","name":"kimi-k2.5:cloud","provider":"ollama-cloud","api":"ollama","contextWindow":128000,"reasoning":true,"input":["text"],"compat":{"supportsUsageInStreaming":true,"supportsTools":true}}
+{"id":"minimax-m2.7:cloud","name":"minimax-m2.7:cloud","provider":"ollama-cloud","api":"ollama","contextWindow":128000,"reasoning":true,"input":["text"],"compat":{"supportsUsageInStreaming":true,"supportsTools":true}}
+{"id":"gpt-5.3-chat-latest","name":"GPT-5.3 Chat (latest)","provider":"openai","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gpt-5.3-codex","name":"GPT-5.3 Codex","provider":"openai","api":"openai-responses","contextWindow":400000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4","name":"GPT-5.4","provider":"openai","api":"openai-responses","contextWindow":272000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4-mini","name":"GPT-5.4 mini","provider":"openai","api":"openai-responses","contextWindow":400000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4-nano","name":"GPT-5.4 nano","provider":"openai","api":"openai-responses","contextWindow":400000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.4-pro","name":"GPT-5.4 Pro","provider":"openai","api":"openai-responses","contextWindow":1050000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.5","name":"GPT-5.5","provider":"openai","api":"openai-responses","contextWindow":1000000,"contextTokens":272000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.5-pro","name":"gpt-5.5-pro","provider":"openai","api":"openai-responses","contextWindow":1000000,"reasoning":true,"input":["text","image"]}
+{"id":"gpt-5.6","name":"GPT-5.6","provider":"openai","api":"openai-responses","contextWindow":1050000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportedReasoningEfforts":["none","low","medium","high","xhigh","max"]}}
+{"id":"gpt-5.6-luna","name":"GPT-5.6 Luna","provider":"openai","api":"openai-responses","contextWindow":1050000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportedReasoningEfforts":["none","low","medium","high","xhigh","max"]}}
+{"id":"gpt-5.6-sol","name":"GPT-5.6 Sol","provider":"openai","api":"openai-responses","contextWindow":1050000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportedReasoningEfforts":["none","low","medium","high","xhigh","max"]}}
+{"id":"gpt-5.6-terra","name":"GPT-5.6 Terra","provider":"openai","api":"openai-responses","contextWindow":1050000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportedReasoningEfforts":["none","low","medium","high","xhigh","max"]}}
+{"id":"o1","name":"o1","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o1-pro","name":"o1-pro","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o3","name":"o3","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o3-deep-research","name":"o3-deep-research","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o3-mini","name":"o3-mini","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text"]}
+{"id":"o3-pro","name":"o3-pro","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o4-mini","name":"o4-mini","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"o4-mini-deep-research","name":"o4-mini-deep-research","provider":"openai","api":"openai-responses","contextWindow":200000,"reasoning":true,"input":["text","image"]}
+{"id":"claude-opus-4-8","name":"Claude Opus 4.8","provider":"opencode","api":"anthropic-messages","contextWindow":200000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+{"id":"gemini-3.1-pro","name":"Gemini 3.1 Pro","provider":"opencode","api":"google-generative-ai","contextWindow":1048576,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+{"id":"gpt-5.5","name":"GPT-5.5","provider":"opencode","api":"openai-responses","contextWindow":400000,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+{"id":"minimax-m2.7","name":"MiniMax M2.7","provider":"opencode","api":"openai-completions","contextWindow":204800,"reasoning":true,"input":["text"],"compat":{"supportsDeveloperRole":false,"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"supportsStrictMode":false,"maxTokensField":"max_tokens"}}
+{"id":"deepseek-v4-flash","name":"DeepSeek V4 Flash","provider":"opencode-go","api":"openai-completions","contextWindow":1000000,"reasoning":true,"input":["text"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+{"id":"deepseek-v4-pro","name":"DeepSeek V4 Pro","provider":"opencode-go","api":"openai-completions","contextWindow":1000000,"reasoning":true,"input":["text"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+{"id":"deepseek-ai/DeepSeek-V4-Pro","name":"DeepSeek V4 Pro","provider":"together","api":"openai-completions","contextWindow":512000,"reasoning":true,"input":["text"]}
+{"id":"zai-org/GLM-5.1","name":"GLM 5.1 FP4","provider":"together","api":"openai-completions","contextWindow":202752,"reasoning":true,"input":["text"]}
+{"id":"moonshotai/Kimi-K2.6","name":"Kimi K2.6 FP4","provider":"together","api":"openai-completions","contextWindow":262144,"reasoning":true,"input":["text","image"]}
+{"id":"meta-llama/Llama-3.3-70B-Instruct-Turbo","name":"Llama 3.3 70B Instruct Turbo","provider":"together","api":"openai-completions","contextWindow":131072,"reasoning":false,"input":["text"]}
+{"id":"Qwen/Qwen2.5-7B-Instruct-Turbo","name":"Qwen2.5 7B Instruct Turbo","provider":"together","api":"openai-completions","contextWindow":32768,"reasoning":false,"input":["text"]}
+{"id":"deepseek-v3-2-251201","name":"DeepSeek V3.2","provider":"volcengine","api":"openai-completions","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"doubao-seed-1-8-251228","name":"Doubao Seed 1.8","provider":"volcengine","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text","image"]}
+{"id":"doubao-seed-code-preview-251028","name":"doubao-seed-code-preview-251028","provider":"volcengine","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text","image"]}
+{"id":"glm-4-7-251222","name":"GLM 4.7","provider":"volcengine","api":"openai-completions","contextWindow":200000,"reasoning":false,"input":["text","image"]}
+{"id":"kimi-k2-5-260127","name":"Kimi K2.5","provider":"volcengine","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text","image"]}
+{"id":"ark-code-latest","name":"Ark Coding Plan","provider":"volcengine-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"doubao-seed-code","name":"Doubao Seed Code","provider":"volcengine-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"doubao-seed-code-preview-251028","name":"Doubao Seed Code Preview","provider":"volcengine-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"glm-4.7","name":"GLM 4.7 Coding","provider":"volcengine-plan","api":"openai-completions","contextWindow":200000,"reasoning":false,"input":["text"]}
+{"id":"kimi-k2-thinking","name":"Kimi K2 Thinking","provider":"volcengine-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"kimi-k2.5","name":"Kimi K2.5 Coding","provider":"volcengine-plan","api":"openai-completions","contextWindow":256000,"reasoning":false,"input":["text"]}
+{"id":"mimo-v2-flash","name":"Xiaomi MiMo V2 Flash","provider":"xiaomi","api":"openai-completions","contextWindow":262144,"reasoning":false,"input":["text"]}
+{"id":"mimo-v2-omni","name":"Xiaomi MiMo V2 Omni","provider":"xiaomi","api":"openai-completions","contextWindow":262144,"reasoning":true,"input":["text","image"]}
+{"id":"mimo-v2-pro","name":"Xiaomi MiMo V2 Pro","provider":"xiaomi","api":"openai-completions","contextWindow":1048576,"reasoning":true,"input":["text"]}
+{"id":"mimo-v2.5","name":"Xiaomi MiMo V2.5","provider":"xiaomi-token-plan","api":"openai-completions","contextWindow":1048576,"reasoning":true,"input":["text","image"]}
+{"id":"mimo-v2.5-pro","name":"Xiaomi MiMo V2.5 Pro","provider":"xiaomi-token-plan","api":"openai-completions","contextWindow":1048576,"reasoning":true,"input":["text"]}
+
+================ PROVIDERS ================
+{"provider":"anthropic","count":9,"defaults":["claude-fable-5","claude-haiku-4-5","claude-haiku-4-5-20251001"],"available":true,"configured":false,"selected":false}
+{"provider":"byteplus","count":3,"defaults":["glm-4-7-251222","kimi-k2-5-260127","seed-1-8-251228"],"available":true,"configured":false,"selected":false}
+{"provider":"byteplus-plan","count":5,"defaults":["ark-code-latest","doubao-seed-code","glm-4.7"],"available":true,"configured":false,"selected":false}
+{"provider":"claude-cli","count":5,"defaults":["claude-opus-4-6","claude-opus-4-7","claude-opus-4-8"],"available":true,"configured":false,"selected":false}
+{"provider":"cohere","count":1,"defaults":["command-a-03-2025"],"available":true,"configured":false,"selected":false}
+{"provider":"github-copilot","count":14,"defaults":["claude-opus-4.6","claude-opus-4.7","claude-opus-4.8"],"available":true,"configured":false,"selected":false}
+{"provider":"meta","count":1,"defaults":["muse-spark-1.1"],"available":true,"configured":false,"selected":false}
+{"provider":"mistral","count":8,"defaults":["codestral-latest","devstral-medium-latest","magistral-small"],"available":true,"configured":false,"selected":false}
+{"provider":"novita","count":6,"defaults":["deepseek/deepseek-r1-0528","deepseek/deepseek-v3-0324","zai-org/glm-5"],"available":true,"configured":false,"selected":false}
+{"provider":"nvidia","count":7,"defaults":["z-ai/glm-5.1","z-ai/glm5","moonshotai/kimi-k2.5"],"available":true,"configured":false,"selected":false}
+{"provider":"ollama-cloud","count":4,"defaults":["glm-5.1:cloud","glm-5.2:cloud","kimi-k2.5:cloud"],"available":true,"configured":false,"selected":false}
+{"provider":"openai","count":20,"defaults":["gpt-5.3-chat-latest","gpt-5.3-codex","gpt-5.4"],"available":true,"configured":false,"selected":false}
+{"provider":"opencode","count":4,"defaults":["claude-opus-4-8","gemini-3.1-pro","gpt-5.5"],"available":true,"configured":false,"selected":false}
+{"provider":"opencode-go","count":2,"defaults":["deepseek-v4-flash","deepseek-v4-pro"],"available":true,"configured":false,"selected":false}
+{"provider":"together","count":5,"defaults":["deepseek-ai/DeepSeek-V4-Pro","zai-org/GLM-5.1","moonshotai/Kimi-K2.6"],"available":true,"configured":false,"selected":false}
+{"provider":"volcengine","count":5,"defaults":["deepseek-v3-2-251201","doubao-seed-1-8-251228","doubao-seed-code-preview-251028"],"available":true,"configured":false,"selected":false}
+{"provider":"volcengine-plan","count":6,"defaults":["ark-code-latest","doubao-seed-code","doubao-seed-code-preview-251028"],"available":true,"configured":false,"selected":false}
+{"provider":"xiaomi","count":3,"defaults":["mimo-v2-flash","mimo-v2-omni","mimo-v2-pro"],"available":true,"configured":false,"selected":false}
+{"provider":"xiaomi-token-plan","count":2,"defaults":["mimo-v2.5","mimo-v2.5-pro"],"available":true,"configured":false,"selected":false}
+
+================ GOOGLE MODELS ================
+{"id":"gemini-2.5-pro","name":"Gemini 2.5 Pro","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-3-flash","name":"Gemini 3 Flash","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-3.1-pro","name":"Gemini 3.1 Pro","provider":"github-copilot","api":"openai-responses","contextWindow":128000,"reasoning":false,"input":["text","image"]}
+{"id":"gemini-3.1-pro","name":"Gemini 3.1 Pro","provider":"opencode","api":"google-generative-ai","contextWindow":1048576,"reasoning":true,"input":["text","image"],"compat":{"supportsReasoningEffort":true,"supportsUsageInStreaming":true,"maxTokensField":"max_tokens"}}
+
+================ CONFIG MODEL ================
+{
+  "primary": "google/gemini-3.6-flash",
+  "fallbacks": []
+}
+
+================ GATEWAY STATUS ================
+Service: systemd user (disabled)
+File logs: /tmp/openclaw/openclaw-2026-09-06.log
+
+Config (cli): /data/config/openclaw.json5
+Config (service): /data/config/openclaw.json5
+
+Gateway: bind=loopback (127.0.0.1), port=18789 (env/config)
+Probe target: ws://127.0.0.1:18789
+Dashboard: http://127.0.0.1:18789/
+Probe note: Loopback-only gateway; only local clients can connect.
+
+Runtime: unknown (systemctl not available; systemd user services are required on Linux.)
+Connectivity probe: failed
+Probe target: ws://127.0.0.1:18789
+  device identity required
+Capability: unknown
+
+systemd user services unavailable.
+systemd user services are unavailable; install/enable systemd or run the gateway under your supervisor.
+If you're in a container, run the gateway in the foreground instead of `openclaw gateway`.
+
+Port 18789 is already in use.
+- pid 8 node: openclaw-gateway (127.0.0.1:18789)
+- pid 8 node: openclaw-gateway ([::1]:18789)
+Listening: 127.0.0.1:18789, [::1]:18789
+Troubles: run openclaw status
+Troubleshooting: https://docs.openclaw.ai/troubleshooting
+
+================ CONTAINER ENV (FILTERED) ================
+OPENCLAW_STATE_DIR=<set>
+OPENCLAW_CONFIG_PATH=<set>
+
+================ RECENT LOGS ================
 
 OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
 
-Usage: openclaw health [options]
+Usage: openclaw logs [options]
 
-Fetch health from the running gateway
+Tail gateway file logs via RPC
 
 Options:
-  --debug         Alias for --verbose (default: false)
-  -h, --help      Display help for command
-  --json          Output JSON instead of text (default: false)
-  --timeout <ms>  Connection timeout in milliseconds (default: "10000")
-  --verbose       Verbose logging (default: false)
+  --expect-final   Wait for final response (agent) (default: false)
+  --follow         Follow log output (default: false)
+  -h, --help       Display help for command
+  --interval <ms>  Polling interval in ms (default: "1000")
+  --json           Emit JSON log lines (default: false)
+  --limit <n>      Max lines to return (default: "200")
+  --local-time     Display timestamps in local timezone (default) (default:
+                   false)
+  --max-bytes <n>  Max bytes to read (default: "250000")
+  --no-color       Disable ANSI colors
+  --plain          Plain text output (no ANSI styling) (default: false)
+  --timeout <ms>   Timeout in ms (default: "30000")
+  --token <token>  Gateway token (if required)
+  --url <url>      Gateway WebSocket URL (defaults to gateway.remote.url when
+                   configured)
+  --utc            Display timestamps in UTC (default: false)
 
+Docs: https://docs.openclaw.ai/cli/logs
