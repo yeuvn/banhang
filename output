@@ -1,71 +1,554 @@
-aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-set -x
-openclaw models list --help
-echo
-openclaw models status --json
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+sed -n "1,260p" /app/node_modules/@openclaw/ai/src/providers/google.ts
 '
-+ openclaw models list --help
+// Google provider adapts Gemini streams and tools to the agent runtime.
+import { type GenerateContentParameters, GoogleGenAI } from "@google/genai";
+import { getEnvApiKey } from "../env-api-keys.js";
+import { getAiTransportHost, resolveAiTransportHeaderSentinels } from "../host.js";
+import type { Context, Model, SimpleStreamOptions, StreamFunction } from "../types.js";
+import { AssistantMessageEventStream } from "../utils/event-stream.js";
+import {
+  buildGoogleGenerateContentParams,
+  buildGoogleSimpleThinking,
+  createGoogleAssistantOutput,
+  getDisabledGoogleThinkingConfig,
+  type GoogleProviderOptions,
+  runGoogleGenerateContentLifecycle,
+} from "./google-shared.js";
+import { buildBaseOptions } from "./simple-options.js";
 
-OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
+type GoogleOptions = GoogleProviderOptions;
 
-Usage: openclaw models list [options]
+// Counter for generating unique tool call IDs
+let toolCallCounter = 0;
 
-List models (configured by default)
+export const streamGoogle: StreamFunction<"google-generative-ai", GoogleOptions> = (
+  model: Model<"google-generative-ai">,
+  context: Context,
+  options?: GoogleOptions,
+) => {
+  const stream = new AssistantMessageEventStream();
+  const output = createGoogleAssistantOutput(model, "google-generative-ai");
 
-Options:
-  --all            Show full model catalog (default: false)
-  -h, --help       Display help for command
-  --json           Output JSON (default: false)
-  --local          Filter to local models (default: false)
-  --plain          Plain line output (default: false)
-  --provider <id>  Filter by provider id
-+ echo
-+ openclaw models status --json
-
-{
-  "configPath": "/data/config/openclaw.json5",
-  "agentDir": "/data/state/agents/main/agent",
-  "defaultModel": "google/gemini-3.6-flash",
-  "resolvedDefault": "google/gemini-3.6-flash",
-  "fallbacks": [],
-  "imageModel": null,
-  "imageFallbacks": [],
-  "aliases": {},
-  "allowed": [],
-  "auth": {
-    "storePath": "/data/state/agents/main/agent/openclaw-agent.sqlite",
-    "shellEnvFallback": {
-      "enabled": false,
-      "appliedKeys": []
+  void runGoogleGenerateContentLifecycle({
+    stream,
+    model,
+    output,
+    options,
+    createClient: () => {
+      const apiKey = options?.apiKey || getEnvApiKey(model.provider) || "";
+      return createClient(model, apiKey, options?.headers);
     },
-    "providersWithOAuth": [],
-    "missingProvidersInUse": [],
-    "runtimeAuthRoutes": [],
-    "providers": [
-      {
-        "provider": "google",
-        "effective": {
-          "kind": "env",
-          "detail": "AQ.A***WVw"
-        },
-        "profiles": {
-          "count": 0,
-          "oauth": 0,
-          "token": 0,
-          "apiKey": 0,
-          "labels": []
-        },
-        "env": {
-          "value": "AQ.Ab***WVw",
-          "source": "env: GEMINI_API_KEY"
+    buildParams: () => buildParams(model, context, options),
+    nextToolCallId: (name) => `${name}_${Date.now()}_${++toolCallCounter}`,
+  });
+
+  return stream;
+};
+
+export const streamSimpleGoogle: StreamFunction<"google-generative-ai", SimpleStreamOptions> = (
+  model: Model<"google-generative-ai">,
+  context: Context,
+  options?: SimpleStreamOptions,
+) => {
+  const apiKey = options?.apiKey || getEnvApiKey(model.provider);
+  if (!apiKey) {
+    throw new Error(`No API key for provider: ${model.provider}`);
+  }
+
+  const base = buildBaseOptions(model, options, apiKey);
+  return streamGoogle(model, context, {
+    ...base,
+    thinking: buildGoogleSimpleThinking(model, options, {
+      includeGemma4ThinkingLevel: true,
+      useFlashLiteBudgets: true,
+    }),
+  } satisfies GoogleOptions);
+};
+
+function createClient(
+  model: Model<"google-generative-ai">,
+  apiKey?: string,
+  optionsHeaders?: Record<string, string>,
+): GoogleGenAI {
+  const httpOptions: { baseUrl?: string; apiVersion?: string; headers?: Record<string, string> } =
+    {};
+  if (model.baseUrl) {
+    httpOptions.baseUrl = model.baseUrl;
+    httpOptions.apiVersion = ""; // baseUrl already includes version path, don't append
+  }
+  if (model.headers || optionsHeaders) {
+    httpOptions.headers = resolveAiTransportHeaderSentinels({
+      ...model.headers,
+      ...optionsHeaders,
+    });
+  }
+
+  // @google/genai exposes RequestInit options but no custom fetch; unwrap at construction.
+  const resolvedApiKey = apiKey ? getAiTransportHost().resolveSecretSentinel(apiKey) : undefined;
+  return new GoogleGenAI({
+    apiKey: resolvedApiKey,
+    httpOptions: Object.keys(httpOptions).length > 0 ? httpOptions : undefined,
+  });
+}
+
+function buildParams(
+  model: Model<"google-generative-ai">,
+  context: Context,
+  options: GoogleOptions = {},
+): GenerateContentParameters {
+  return buildGoogleGenerateContentParams(model, context, options, {
+    getDisabledThinkingConfig: (modelLocal) =>
+      getDisabledGoogleThinkingConfig(modelLocal, { includeGemma4: true }),
+  });
+}
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+sed -n "1,320p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
+'
+/**
+ * Shared utilities for Google Generative AI and Google Vertex providers.
+ */
+
+import {
+  type Content,
+  FinishReason,
+  FunctionCallingConfigMode,
+  type GenerateContentConfig,
+  type GenerateContentParameters,
+  type GenerateContentResponse,
+  type Part,
+  type ThinkingConfig,
+} from "@google/genai";
+import { calculateCost, clampThinkingLevel } from "../model-utils.js";
+import type {
+  Api,
+  AssistantMessage,
+  Context,
+  ImageContent,
+  Model,
+  SimpleStreamOptions,
+  StopReason,
+  TextContent,
+  ThinkingBudgets,
+  ThinkingContent,
+  ThinkingLevel as AgentThinkingLevel,
+  Tool,
+  ToolCall,
+  StreamOptions,
+} from "../types.js";
+import type { AssistantMessageEventStream } from "../utils/event-stream.js";
+import { sanitizeSurrogates } from "../utils/sanitize-unicode.js";
+import { stripSystemPromptCacheBoundary } from "../utils/system-prompt-cache-boundary.js";
+import { describeToolResultMediaPlaceholder, extractToolResultText } from "./tool-result-text.js";
+import { transformMessages } from "./transform-messages.js";
+
+type GoogleApiType = "google-generative-ai" | "google-vertex";
+
+/**
+ * Thinking level for Gemini 3 models.
+ * Mirrors Google's ThinkingLevel enum values.
+ */
+export type GoogleThinkingLevel =
+  | "THINKING_LEVEL_UNSPECIFIED"
+  | "MINIMAL"
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH";
+
+type GoogleToolChoice = "auto" | "none" | "any";
+
+type GoogleThinkingOptions = {
+  enabled: boolean;
+  budgetTokens?: number;
+  level?: GoogleThinkingLevel;
+};
+
+export type GoogleProviderOptions = StreamOptions & {
+  toolChoice?: GoogleToolChoice;
+  thinking?: GoogleThinkingOptions;
+};
+
+type GoogleGenerateContentClient = {
+  models: {
+    generateContentStream(
+      params: GenerateContentParameters,
+    ): Promise<AsyncIterable<GenerateContentResponse>> | AsyncIterable<GenerateContentResponse>;
+  };
+};
+
+type ClampedGoogleThinkingLevel = Exclude<AgentThinkingLevel, "xhigh" | "max">;
+
+/**
+ * Determines whether a streamed Gemini `Part` should be treated as "thinking".
+ *
+ * Protocol note (Gemini / Vertex AI thought signatures):
+ * - `thought: true` is the definitive marker for thinking content (thought summaries).
+ * - `thoughtSignature` is an encrypted representation of the model's internal thought process
+ *   used to preserve reasoning context across multi-turn interactions.
+ * - `thoughtSignature` can appear on ANY part type (text, functionCall, etc.) - it does NOT
+ *   indicate the part itself is thinking content.
+ * - For non-functionCall responses, the signature appears on the last part for context replay.
+ * - When persisting/replaying model outputs, signature-bearing parts must be preserved as-is;
+ *   do not merge/move signatures across parts.
+ *
+ * See: https://ai.google.dev/gemini-api/docs/thought-signatures
+ */
+function isThinkingPart(part: Pick<Part, "thought" | "thoughtSignature">): boolean {
+  return part.thought === true;
+}
+
+/**
+ * Retain thought signatures during streaming.
+ *
+ * Some backends only send `thoughtSignature` on the first delta for a given part/block; later deltas may omit it.
+ * This helper preserves the last non-empty signature for the current block.
+ *
+ * Note: this does NOT merge or move signatures across distinct response parts. It only prevents
+ * a signature from being overwritten with `undefined` within the same streamed block.
+ */
+export function retainThoughtSignature(
+  existing: string | undefined,
+  incoming: string | undefined,
+): string | undefined {
+  if (typeof incoming === "string" && incoming.length > 0) {
+    return incoming;
+  }
+  return existing;
+}
+
+// Thought signatures must be base64 for Google APIs (TYPE_BYTES).
+const base64SignaturePattern = /^[A-Za-z0-9+/]+={0,2}$/;
+
+function isValidThoughtSignature(signature: string | undefined): boolean {
+  if (!signature) {
+    return false;
+  }
+  if (signature.length % 4 !== 0) {
+    return false;
+  }
+  return base64SignaturePattern.test(signature);
+}
+
+/**
+ * Only keep signatures from the same provider/model and with valid base64.
+ */
+function resolveThoughtSignature(
+  isSameProviderAndModel: boolean,
+  signature: string | undefined,
+): string | undefined {
+  return isSameProviderAndModel && isValidThoughtSignature(signature) ? signature : undefined;
+}
+
+/**
+ * Models via Google APIs that require explicit tool call IDs in function calls/responses.
+ */
+export function requiresToolCallId(modelId: string): boolean {
+  return modelId.startsWith("claude-") || modelId.startsWith("gpt-oss-");
+}
+
+function getGeminiMajorVersion(modelId: string): number | undefined {
+  const match = modelId.toLowerCase().match(/^gemini(?:-live)?-(\d+)/);
+  if (!match) {
+    return undefined;
+  }
+  return Number.parseInt(match[1], 10);
+}
+
+function supportsMultimodalFunctionResponse(modelId: string): boolean {
+  const geminiMajorVersion = getGeminiMajorVersion(modelId);
+  if (geminiMajorVersion !== undefined) {
+    return geminiMajorVersion >= 3;
+  }
+  return true;
+}
+
+/**
+ * Convert internal messages to Gemini Content[] format.
+ */
+export function convertMessages<T extends GoogleApiType>(
+  model: Model<T>,
+  context: Context,
+): Content[] {
+  const contents: Content[] = [];
+  const normalizeToolCallId = (id: string): string => {
+    if (!requiresToolCallId(model.id)) {
+      return id;
+    }
+    return id.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+  };
+
+  const transformedMessages = transformMessages(context.messages, model, normalizeToolCallId);
+
+  // Parallel calls need one immediate function-response turn. Gemini < 3 images cannot
+  // live inside functionResponse, so hold them until the consecutive result run ends.
+  const pendingToolResultImageTurns: Content[] = [];
+  let activeToolResultParts: Part[] | undefined;
+  const flushToolResultRun = (): void => {
+    contents.push(...pendingToolResultImageTurns);
+    pendingToolResultImageTurns.length = 0;
+    activeToolResultParts = undefined;
+  };
+
+  for (const msg of transformedMessages) {
+    if (msg.role !== "toolResult") {
+      flushToolResultRun();
+    }
+    if (msg.role === "user") {
+      if (typeof msg.content === "string") {
+        contents.push({
+          role: "user",
+          parts: [{ text: sanitizeSurrogates(msg.content) }],
+        });
+      } else {
+        const parts: Part[] = msg.content.map((item) => {
+          if (item.type === "text") {
+            return { text: sanitizeSurrogates(item.text) };
+          }
+          return {
+            inlineData: {
+              mimeType: item.mimeType,
+              data: item.data,
+            },
+          };
+        });
+        if (parts.length === 0) {
+          continue;
+        }
+        contents.push({
+          role: "user",
+          parts,
+        });
+      }
+    } else if (msg.role === "assistant") {
+      const parts: Part[] = [];
+      // Check if message is from same provider and model - only then keep thinking blocks
+      const isSameProviderAndModel = msg.provider === model.provider && msg.model === model.id;
+
+      for (const block of msg.content) {
+        if (block.type === "text") {
+          // Skip empty text blocks
+          if (!block.text || block.text.trim() === "") {
+            continue;
+          }
+          const thoughtSignature = resolveThoughtSignature(
+            isSameProviderAndModel,
+            block.textSignature,
+          );
+          parts.push({
+            text: sanitizeSurrogates(block.text),
+            ...(thoughtSignature && { thoughtSignature }),
+          });
+        } else if (block.type === "thinking") {
+          // Skip empty thinking blocks
+          if (!block.thinking || block.thinking.trim() === "") {
+            continue;
+          }
+          // Only keep as thinking block if same provider AND same model
+          // Otherwise convert to plain text (no tags to avoid model mimicking them)
+          if (isSameProviderAndModel) {
+            const thoughtSignature = resolveThoughtSignature(
+              isSameProviderAndModel,
+              block.thinkingSignature,
+            );
+            parts.push({
+              thought: true,
+              text: sanitizeSurrogates(block.thinking),
+              ...(thoughtSignature && { thoughtSignature }),
+            });
+          } else {
+            parts.push({
+              text: sanitizeSurrogates(block.thinking),
+            });
+          }
+        } else if (block.type === "toolCall") {
+          const thoughtSignature = resolveThoughtSignature(
+            isSameProviderAndModel,
+            block.thoughtSignature,
+          );
+          const part: Part = {
+            functionCall: {
+              name: block.name,
+              args: block.arguments ?? {},
+              ...(requiresToolCallId(model.id) ? { id: block.id } : {}),
+            },
+            ...(thoughtSignature && { thoughtSignature }),
+          };
+          parts.push(part);
         }
       }
-    ],
-    "unusableProfiles": [],
-    "oauth": {
-      "warnAfterMs": 86400000,
-      "profiles": [],
-      "providers": []
+
+      if (parts.length === 0) {
+        continue;
+      }
+      contents.push({
+        role: "model",
+        parts,
+      });
+    } else if (msg.role === "toolResult") {
+      // Extract text and image content
+      const textResult = extractToolResultText(msg.content);
+      const imageContent = model.input.includes("image")
+        ? msg.content.filter((c): c is ImageContent => c.type === "image")
+        : [];
+
+      const hasText = textResult.length > 0;
+      const hasImages = imageContent.length > 0;
+      const mediaPlaceholder = describeToolResultMediaPlaceholder(msg.content);
+
+      // Gemini 3+ models support multimodal function responses with images nested inside
+      // functionResponse.parts. Claude and other non-Gemini models behind Cloud Code Assist /
+      // Gemini < 3 still needs a separate user image turn.
+      const modelSupportsMultimodalFunctionResponse = supportsMultimodalFunctionResponse(model.id);
+
+      // Use "output" key for success, "error" key for errors as per SDK documentation
+      const responseValue = hasText ? sanitizeSurrogates(textResult) : (mediaPlaceholder ?? "");
+
+      const imageParts: Part[] = imageContent.map((imageBlock) => ({
+        inlineData: {
+          mimeType: imageBlock.mimeType,
+          data: imageBlock.data,
+        },
+      }));
+
+      const includeId = requiresToolCallId(model.id);
+      const functionResponsePart: Part = {
+        functionResponse: {
+          name: msg.toolName,
+          response: msg.isError ? { error: responseValue } : { output: responseValue },
+          ...(hasImages && modelSupportsMultimodalFunctionResponse && { parts: imageParts }),
+          ...(includeId ? { id: msg.toolCallId } : {}),
+        },
+      };
+
+      // Cloud Code Assist API requires all function responses to be in a single user turn.
+      if (activeToolResultParts) {
+        activeToolResultParts.push(functionResponsePart);
+      } else {
+        activeToolResultParts = [functionResponsePart];
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+sed -n "1,260p" /app/node_modules/@openclaw/ai/src/providers/google-client-auth.test.ts
+'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { configureAiTransportHost } from "../host.js";
+import type { Context, Model } from "../types.js";
+
+const googleMockState = vi.hoisted(() => ({ configs: [] as unknown[] }));
+
+vi.mock("@google/genai", () => ({
+  GoogleGenAI: class MockGoogleGenAI {
+    models = {
+      generateContentStream: vi.fn(() => {
+        throw new Error("stop after constructor");
+      }),
+    };
+
+    constructor(config: unknown) {
+      googleMockState.configs.push(config);
     }
-  }
+  },
+  ResourceScope: { COLLECTION: "COLLECTION" },
+  ThinkingLevel: {
+    THINKING_LEVEL_UNSPECIFIED: "THINKING_LEVEL_UNSPECIFIED",
+    MINIMAL: "MINIMAL",
+    LOW: "LOW",
+    MEDIUM: "MEDIUM",
+    HIGH: "HIGH",
+  },
+}));
+
+import { streamGoogleVertex } from "./google-vertex.js";
+import { streamGoogle } from "./google.js";
+
+const context = {
+  messages: [{ role: "user", content: "hello", timestamp: 0 }],
+} satisfies Context;
+const sentinel = "oc-sent-v1-0123456789abcdef01234567";
+
+function googleModel(): Model<"google-generative-ai"> {
+  return {
+    id: "gemini-3-flash-preview",
+    name: "Gemini 3 Flash Preview",
+    api: "google-generative-ai",
+    provider: "google",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+    reasoning: true,
+    input: ["text"],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 1_000_000,
+    maxTokens: 8192,
+  };
 }
+
+function vertexModel(): Model<"google-vertex"> {
+  return {
+    ...googleModel(),
+    api: "google-vertex",
+    provider: "google-vertex",
+    baseUrl: "https://us-central1-aiplatform.googleapis.com/v1",
+  };
+}
+
+describe("Google SDK construction auth", () => {
+  beforeEach(() => {
+    googleMockState.configs = [];
+  });
+
+  afterEach(() => {
+    configureAiTransportHost({});
+  });
+
+  it("unwraps Google API-key sentinels immediately before client construction", async () => {
+    const buildModelFetch = vi.fn();
+    configureAiTransportHost({
+      buildModelFetch,
+      resolveSecretSentinel: (value) => value.replaceAll(sentinel, "google-construction-secret"),
+    });
+
+    const result = await streamGoogle(
+      {
+        ...googleModel(),
+        headers: { Authorization: `Bearer ${sentinel}` },
+      },
+      context,
+      { apiKey: sentinel },
+    ).result();
+
+    expect(result.stopReason).toBe("error");
+    expect(googleMockState.configs[0]).toMatchObject({
+      apiKey: "google-construction-secret",
+      httpOptions: { headers: { Authorization: "Bearer google-construction-secret" } },
+    });
+    expect(JSON.stringify(googleMockState.configs[0])).not.toContain(sentinel);
+    expect(buildModelFetch).not.toHaveBeenCalled();
+  });
+
+  it("unwraps Vertex API-key sentinels immediately before client construction", async () => {
+    const buildModelFetch = vi.fn();
+    configureAiTransportHost({
+      buildModelFetch,
+      resolveSecretSentinel: (value) => value.replaceAll(sentinel, "vertex-construction-secret"),
+    });
+
+    const result = await streamGoogleVertex(
+      {
+        ...vertexModel(),
+        headers: { "X-Provider-Token": sentinel },
+      },
+      context,
+      {
+        apiKey: sentinel,
+        project: "demo-project",
+        location: "us-central1",
+      },
+    ).result();
+
+    expect(result.stopReason).toBe("error");
+    expect(googleMockState.configs[0]).toMatchObject({
+      apiKey: "vertex-construction-secret",
+      vertexai: true,
+      httpOptions: { headers: { "X-Provider-Token": "vertex-construction-secret" } },
+    });
+    expect(JSON.stringify(googleMockState.configs[0])).not.toContain(sentinel);
+    expect(buildModelFetch).not.toHaveBeenCalled();
+  });
+});
