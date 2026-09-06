@@ -43,6 +43,11 @@ III. QUY TRÌNH THỰC THI & TƯƠNG TÁC VỚI GITHUB
    - Quy tắc ghi nhật ký: 
      + Phải có Ngày, Giờ cụ thể.
      + Phải cập nhật/ghi đè công việc cũ (XÓA công việc cũ nếu có thông tin mới để tránh trùng lặp).
+3. Bước làm:
+ChatGPT sửa code/config/workflow trên GitHub — branch Openclaw-Test.
+GitHub Actions AIHome OpenClaw TEST Box, Actions phải PASS toàn bộ. Sau khi PASS mới coi bản đó đạt PASS TEST và deploy/sync xuống Box TEST.
+Sau khi TEST Box chạy thực tế ổn định, mới chuẩn bị promotion sang Box thật.
+Không đưa bản chưa PASS sang Box thật.
 
 ==================================================
 XÁC NHẬN BẮT ĐẦU
