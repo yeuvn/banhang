@@ -1,810 +1,137 @@
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-24-  headers?: Record<string, string>,
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-25-): Record<string, string> | undefined {
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-26-  if (!headers) {
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-27-    return undefined;
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-28-  }
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-29-  const next: Record<string, string> = {};
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-30-  for (const [key, value] of Object.entries(headers)) {
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-31-    const lower = key.toLowerCase();
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-32-    if (lower === "authorization" || lower === "x-api-key" || lower === "api-key") {
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-33-      continue;
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-34-    }
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-35-    next[key] = value;
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-36-  }
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-37-  return Object.keys(next).length > 0 ? next : undefined;
-/app/node_modules/@openclaw/ai/src/providers/anthropic-auth-headers.ts-38-}
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-21-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-22-export const asRecord = (value: unknown): Record<string, unknown> => {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-23-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-24-    throw new Error("expected record");
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-25-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-26-  return value as Record<string, unknown>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-27-};
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-28-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-29-type ConvertedTools = ReadonlyArray<{
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-30-  functionDeclarations?: ReadonlyArray<{
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-31-    parametersJsonSchema?: unknown;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-32-    parameters?: unknown;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-33-  }>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-34-}>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-35-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-36-export const getFirstToolParameters = (converted: ConvertedTools): Record<string, unknown> => {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-37-  const functionDeclaration = asRecord(converted?.[0]?.functionDeclarations?.[0]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-38-  return asRecord(functionDeclaration.parametersJsonSchema ?? functionDeclaration.parameters);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-39-};
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-40-
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+echo "=== SEARCH PROVIDER MODEL CONFIG ==="
+grep -R -n -E \
+  "models\.providers|providers.*models|models.*provider|Model<|ProviderModel" \
+  /app/node_modules/@openclaw \
+  /app/node_modules/openclaw* \
+  2>/dev/null | head -300
+'
+=== SEARCH PROVIDER MODEL CONFIG ===
+/app/node_modules/@openclaw/ai/src/model-utils.ts:9:export function calculateCost<TApi extends Api>(model: Model<TApi>, usage: Usage): Usage["cost"] {
+/app/node_modules/@openclaw/ai/src/model-utils.ts:38:function resolveThinkingLevelMap<TApi extends Api>(model: Model<TApi>) {
+/app/node_modules/@openclaw/ai/src/model-utils.ts:46:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/model-utils.ts:69:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/model-utils.ts:112:  a: Model<TApi> | null | undefined,
+/app/node_modules/@openclaw/ai/src/model-utils.ts:113:  b: Model<TApi> | null | undefined,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.test.ts:12:const model: Model<"google-generative-ai"> = {
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:99:} satisfies Model<"openai-completions">;
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:104:} satisfies Model<"openai-completions">;
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:110:function createModel(maxTokens: number): Model<"openai-completions"> {
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:217:    } satisfies Model<"openai-completions">;
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:292:    } satisfies Model<"openai-completions">;
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.test.ts:315:    } satisfies Model<"openai-completions">;
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:144:> = (model: Model<"openai-completions">, context: Context, options?: OpenAICompletionsOptions) => {
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:587:> = (model: Model<"openai-completions">, context: Context, options?: SimpleStreamOptions) => {
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:613:  model: Model<"openai-completions">,
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:665:  model: Model<"openai-completions">,
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:840:  model: Model<"openai-completions">,
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:990:  model: Model<"openai-completions">,
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:1300:  model: Model<"openai-completions">,
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:1336:function detectCompat(model: Model<"openai-completions">): ResolvedOpenAICompletionsCompat {
+/app/node_modules/@openclaw/ai/src/providers/openai-completions.ts:1413:function getCompat(model: Model<"openai-completions">): ResolvedOpenAICompletionsCompat {
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.test.ts:27:function model(overrides: Partial<Model<"openai-responses">> = {}) {
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.test.ts:40:  } satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.test.ts:16:} satisfies Model<"azure-openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:246:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:267:    targetModel: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:470:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:493:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:516:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:578:  model: Model<TApi>;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.ts:657:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.parallel-image-repro.test.ts:8:  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.parallel-image-repro.test.ts:12:const makeVisionModel = (id: string): Model<"google-generative-ai"> =>
+/app/node_modules/@openclaw/ai/src/providers/google-shared.parallel-image-repro.test.ts:24:  }) as Model<"google-generative-ai">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:76:} satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:83:} satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:90:} satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:318:    } satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:938:    } satisfies Model<"openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses-shared.test.ts:1308:  } satisfies Model<"azure-openai-responses">;
+/app/node_modules/@openclaw/ai/src/providers/transform-messages.ts:42:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/transform-messages.ts:74:  model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/providers/transform-messages.ts:75:  normalizeToolCallId?: (id: string, model: Model<TApi>, source: AssistantMessage) => string,
+/app/node_modules/@openclaw/ai/src/providers/register-builtins.ts:37:  model: Model<TApi>,
 /app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts:41:export const makeModel = (id: string): Model<"google-generative-ai"> =>
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-42-  ({
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-43-    id,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-44-    name: id,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-45-    api: "google-generative-ai",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-46-    provider: "google",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-47-    baseUrl: "https://example.invalid",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-48-    reasoning: false,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-49-    input: ["text"],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-50-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-51-    contextWindow: 1,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-52-    maxTokens: 1,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-53-  }) as Model<"google-generative-ai">;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-54-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts:53:  }) as Model<"google-generative-ai">;
 /app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts:55:export const makeGeminiCliModel = (id: string): Model<"google-gemini-cli"> =>
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-56-  ({
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-57-    id,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-58-    name: id,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-59-    api: "google-gemini-cli",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-60-    provider: "google-gemini-cli",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-61-    baseUrl: "https://example.invalid",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-62-    reasoning: false,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-63-    input: ["text"],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-64-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-65-    contextWindow: 1,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-66-    maxTokens: 1,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-67-  }) as Model<"google-gemini-cli">;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-68-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-69-export function makeGoogleAssistantMessage(model: string, content: unknown) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-70-  return {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-71-    role: "assistant",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-72-    content,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-73-    api: "google-generative-ai",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-74-    provider: "google",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-75-    model,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-76-    usage: makeZeroUsageSnapshot(),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-77-    stopReason: "stop",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-78-    timestamp: 0,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-79-  };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-80-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-81-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-82-export function makeGeminiCliAssistantMessage(model: string, content: unknown) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-83-  return {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-84-    role: "assistant",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-85-    content,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-86-    api: "google-gemini-cli",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-87-    provider: "google-gemini-cli",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-88-    model,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-89-    usage: makeZeroUsageSnapshot(),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-90-    stopReason: "stop",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-91-    timestamp: 0,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-92-  };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-93-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-94-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-95-export function expectConvertedRoles(contents: Array<{ role?: string }>, expectedRoles: string[]) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-96-  expect(contents).toHaveLength(expectedRoles.length);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-97-  for (const [index, role] of expectedRoles.entries()) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-98-    expect(contents[index]?.role).toBe(role);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-99-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts-100-}
---
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-28-  baseUrl?: unknown;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-29-  compat?: unknown;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-30-};
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-31-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-32-const GPT_5_REASONING_EFFORTS = ["minimal", "low", "medium", "high"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-33-const GPT_51_REASONING_EFFORTS = ["none", "low", "medium", "high"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-34-const GPT_52_REASONING_EFFORTS = ["none", "low", "medium", "high", "xhigh"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-35-const GPT_56_REASONING_EFFORTS = ["none", "low", "medium", "high", "xhigh", "max"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-36-const GPT_CODEX_REASONING_EFFORTS = ["low", "medium", "high", "xhigh"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-37-const GPT_PRO_REASONING_EFFORTS = ["medium", "high", "xhigh"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-38-const GPT_5_PRO_REASONING_EFFORTS = ["high"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-39-const GPT_51_CODEX_MAX_REASONING_EFFORTS = ["none", "medium", "high", "xhigh"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-40-const GPT_51_CODEX_MINI_REASONING_EFFORTS = ["medium"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-41-const GENERIC_REASONING_EFFORTS = ["low", "medium", "high"] as const;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-42-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-43-function normalizeModelId(id: string | null | undefined): string {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-44-  return normalizeLowercaseStringOrEmpty(id ?? "").replace(/-\d{4}-\d{2}-\d{2}$/u, "");
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-45-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-46-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-47-/** Return whether a model is the GPT-5.4 mini family. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts:48:export function isOpenAIGpt54MiniModel(model: OpenAIReasoningModel): boolean {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-49-  const id = normalizeModelId(typeof model.id === "string" ? model.id : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-50-  return /^gpt-5\.4-mini(?:-|$)/u.test(id);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-51-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-52-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-53-/** Return whether a model is the GPT-5.5 family. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts:54:export function isOpenAIGpt55Model(model: OpenAIReasoningModel): boolean {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-55-  const id = normalizeModelId(typeof model.id === "string" ? model.id : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-56-  const name = normalizeModelId(typeof model.name === "string" ? model.name : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-57-  return /^gpt-5\.5(?:-|$)/u.test(id) || /^gpt-5\.5(?:\s|\(|-|$)/u.test(name);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-58-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-59-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-60-/** Return whether a model is the GPT-5.6 family. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts:61:export function isOpenAIGpt56Model(model: OpenAIReasoningModel): boolean {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-62-  const id = normalizeModelId(typeof model.id === "string" ? model.id : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-63-  const name = normalizeModelId(typeof model.name === "string" ? model.name : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-64-  return /^gpt-5\.6(?:-|$)/u.test(id) || /^gpt-5\.6(?:\s|\(|-|$)/u.test(name);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-65-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-66-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-67-/** Normalize user-facing reasoning effort names to API effort names. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-68-export function normalizeOpenAIReasoningEffort(effort: string): string {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-69-  return effort === "minimal" ? "minimal" : effort;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-70-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-71-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-72-function readCompatReasoningEfforts(compat: unknown): OpenAIApiReasoningEffort[] | undefined {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-73-  if (!compat || typeof compat !== "object") {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-74-    return undefined;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-75-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-76-  if ((compat as { supportsReasoningEffort?: unknown }).supportsReasoningEffort === false) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-77-    return [];
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-78-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-79-  const raw = (compat as { supportedReasoningEfforts?: unknown }).supportedReasoningEfforts;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-80-  if (!Array.isArray(raw)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-81-    return undefined;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-82-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-83-  const supported = uniqueStrings(
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-84-    normalizeStringEntries(raw.filter((value) => typeof value === "string")),
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-85-  );
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-86-  return supported.length > 0 ? supported : undefined;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-87-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-88-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-89-function isDisabledReasoningEffort(effort: string): boolean {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-90-  return effort === "none" || effort === "off";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-91-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-92-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-93-/** Resolve the reasoning efforts accepted by a specific OpenAI-compatible model. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-94-export function resolveOpenAISupportedReasoningEfforts(
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-95-  model: OpenAIReasoningModel,
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-96-): readonly OpenAIApiReasoningEffort[] {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-97-  const compatEfforts = readCompatReasoningEfforts(model.compat);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-98-  if (compatEfforts) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-99-    return compatEfforts;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-100-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-101-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-102-  const id = normalizeModelId(typeof model.id === "string" ? model.id : undefined);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-103-  if (/^gpt-5\.6(?:-|$)/u.test(id)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-104-    return GPT_56_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-105-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-106-  if (id === "gpt-5.1-codex-mini") {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-107-    return GPT_51_CODEX_MINI_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-108-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-109-  if (id === "gpt-5.1-codex-max") {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-110-    return GPT_51_CODEX_MAX_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-111-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-112-  if (/^gpt-5(?:\.\d+)?-codex(?:-|$)/u.test(id)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-113-    return GPT_CODEX_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-114-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-115-  if (id === "gpt-5-pro") {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-116-    return GPT_5_PRO_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-117-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-118-  if (/^gpt-5\.[2-9](?:\.\d+)?-pro(?:-|$)/u.test(id)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-119-    return GPT_PRO_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-120-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-121-  if (/^gpt-5\.[2-9](?:\.\d+)?(?:-|$)/u.test(id)) {
---
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-124-  if (/^gpt-5\.1(?:-|$)/u.test(id)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-125-    return GPT_51_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-126-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-127-  if (/^gpt-5(?:-|$)/u.test(id)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-128-    return GPT_5_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-129-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-130-  return GENERIC_REASONING_EFFORTS;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-131-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-132-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-133-/** Return whether a model accepts a requested reasoning effort. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-134-export function supportsOpenAIReasoningEffort(
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-135-  model: OpenAIReasoningModel,
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-136-  effort: string,
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-137-): boolean {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-138-  return resolveOpenAISupportedReasoningEfforts(model).includes(
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-139-    normalizeOpenAIReasoningEffort(effort) as OpenAIApiReasoningEffort,
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-140-  );
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-141-}
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-142-
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-143-/** Resolve a requested reasoning effort to the closest value supported by the model. */
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts:144:export function resolveOpenAIReasoningEffortForModel(params: {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-145-  model: OpenAIReasoningModel;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-146-  effort: string;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-147-  fallbackMap?: Record<string, string>;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-148-}): OpenAIApiReasoningEffort | undefined {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-149-  const requested = normalizeOpenAIReasoningEffort(params.effort);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-150-  const mapped = params.fallbackMap?.[requested] ?? requested;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-151-  const normalized = normalizeOpenAIReasoningEffort(mapped);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-152-  const supported = resolveOpenAISupportedReasoningEfforts(params.model);
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-153-  if (supported.includes(normalized as OpenAIApiReasoningEffort)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-154-    return normalized as OpenAIApiReasoningEffort;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-155-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-156-  if (requested === "off" && supported.includes("none")) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-157-    return "none";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-158-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-159-  if (isDisabledReasoningEffort(requested) || isDisabledReasoningEffort(normalized)) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-160-    return undefined;
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-161-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-162-  if (requested === "minimal" && supported.includes("low")) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-163-    return "low";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-164-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-165-  if ((requested === "minimal" || requested === "low") && supported.includes("medium")) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-166-    return "medium";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-167-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-168-  if (requested === "xhigh" && supported.includes("high")) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-169-    return "high";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-170-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-171-  if (requested === "max" && supported.includes("xhigh")) {
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-172-    return "xhigh";
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-173-  }
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-174-  return supported.find((effort) => effort !== "none");
-/app/node_modules/@openclaw/ai/src/providers/openai-reasoning-effort.ts-175-}
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-594-      ? config.mapThinkingLevel(level)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-595-      : (level as ThinkingConfig["thinkingLevel"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-596-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-597-  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-598-  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-599-  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-600-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-601-    return { thinkingLevel: mapThinkingLevel("LOW") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-602-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-603-  if (isGemini3FlashModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-604-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-605-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-606-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-607-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-608-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-609-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-610-  // Gemini 2.x supports disabling via thinkingBudget = 0.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-611-  return { thinkingBudget: 0 };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-612-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-613-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.test-helpers.ts:67:  }) as Model<"google-gemini-cli">;
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:30:  model: Model<"azure-openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:75:  model: Model<"azure-openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:102:> = (model: Model<"azure-openai-responses">, context: Context, options?: SimpleStreamOptions) => {
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:149:  model: Model<"azure-openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:182:  model: Model<"azure-openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/azure-openai-responses.ts:227:  model: Model<"azure-openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/mistral.test.ts:39:function makeMistralModel(): Model<"mistral-conversations"> {
+/app/node_modules/@openclaw/ai/src/providers/google.ts:23:  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts:47:  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts:67:  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts:93:  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:162:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:415:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:439:  model: Model<T>;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:478:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:483:    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:548:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:586:  model: Model<T>,
 /app/node_modules/@openclaw/ai/src/providers/google-shared.ts:614:export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-615-  return /gemma-?4/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-616-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-617-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-618-function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-619-  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-620-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-621-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-622-function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-623-  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-624-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-625-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-626-function getGoogleThinkingLevel<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-627-  effort: ClampedGoogleThinkingLevel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-628-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-629-  config?: { includeGemma4?: boolean },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-630-): GoogleThinkingLevel {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-631-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-632-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-633-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-634-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-635-        return "LOW";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-636-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-637-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-638-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-639-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-640-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-641-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-642-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-643-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-644-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-645-        return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-646-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-647-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-648-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-649-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-650-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-651-  switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-652-    case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-653-      return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-654-    case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-655-      return "LOW";
-
-=== GOOGLE PROVIDER CATALOG ===
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-435-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-436-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-437-export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-438-  stream: AssistantMessageEventStream;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-439-  model: Model<T>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-440-  output: AssistantMessage;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-441-  options?: Pick<StreamOptions, "signal" | "onPayload">;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-442-  createClient: () => GoogleGenerateContentClient;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-443-  buildParams: () => GenerateContentParameters;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-444-  nextToolCallId: (name: string | undefined) => string;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-445-}): Promise<void> {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-446-  const { stream, model, output, options } = params;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-447-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-448-  try {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-449-    const client = params.createClient();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-450-    let requestParams = params.buildParams();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-451-    const nextParams = await options?.onPayload?.(requestParams, model);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-452-    if (nextParams !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-453-      requestParams = nextParams as GenerateContentParameters;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-454-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:455:    const googleStream = await client.models.generateContentStream(requestParams);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-456-    await consumeGoogleGenerateContentStream({
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-457-      chunks: googleStream,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-458-      model,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-459-      output,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-460-      stream,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-461-      signal: options?.signal,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-462-      nextToolCallId: params.nextToolCallId,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-463-    });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-464-  } catch (error) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-465-    for (const block of output.content) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-466-      if ("index" in block) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-467-        delete (block as { index?: number }).index;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-468-      }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-469-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-470-    output.stopReason = options?.signal?.aborted ? "aborted" : "error";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-471-    output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-472-    stream.push({ type: "error", reason: output.stopReason, error: output });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-473-    stream.end();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-474-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-475-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-476-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-477-export function buildGoogleGenerateContentParams<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-478-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-479-  context: Context,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-480-  options: GoogleProviderOptions = {},
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-481-  configHooks?: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-482-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-483-    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-484-  },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-485-): GenerateContentParameters {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-486-  const contents = convertMessages(model, context);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-487-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-488-  const generationConfig: GenerateContentConfig = {};
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-489-  if (options.temperature !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-490-    generationConfig.temperature = options.temperature;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-491-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-492-  if (options.maxTokens !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-493-    generationConfig.maxOutputTokens = options.maxTokens;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-494-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-495-  if (options.stop !== undefined && options.stop.length > 0) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-496-    generationConfig.stopSequences = options.stop;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-497-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-498-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-499-  const config: GenerateContentConfig = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-500-    ...(Object.keys(generationConfig).length > 0 && generationConfig),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-501-    ...(context.systemPrompt && {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-502-      systemInstruction: sanitizeSurrogates(stripSystemPromptCacheBoundary(context.systemPrompt)),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-503-    }),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-504-    ...(context.tools && context.tools.length > 0 && { tools: convertTools(context.tools) }),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-505-  };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-506-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-507-  if (context.tools && context.tools.length > 0 && options.toolChoice) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-508-    config.toolConfig = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-509-      functionCallingConfig: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-510-        mode: mapToolChoice(options.toolChoice),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-511-      },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-512-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-513-  } else {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-514-    config.toolConfig = undefined;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-515-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-516-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-517-  if (options.thinking?.enabled && model.reasoning) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-518-    const thinkingConfig: ThinkingConfig = { includeThoughts: true };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-519-    if (options.thinking.level !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-520-      thinkingConfig.thinkingLevel = configHooks?.mapThinkingLevel
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-521-        ? configHooks.mapThinkingLevel(options.thinking.level)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-522-        : (options.thinking.level as ThinkingConfig["thinkingLevel"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-523-    } else if (options.thinking.budgetTokens !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-524-      thinkingConfig.thinkingBudget = options.thinking.budgetTokens;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-525-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-526-    config.thinkingConfig = thinkingConfig;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-527-  } else if (model.reasoning && options.thinking && !options.thinking.enabled) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-528-    config.thinkingConfig = configHooks?.getDisabledThinkingConfig
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-529-      ? configHooks.getDisabledThinkingConfig(model)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-530-      : getDisabledGoogleThinkingConfig(model);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-531-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-532-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-533-  if (options.signal) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-534-    if (options.signal.aborted) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-535-      throw new Error("Request aborted");
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-594-      ? config.mapThinkingLevel(level)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-595-      : (level as ThinkingConfig["thinkingLevel"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-596-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-597-  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-598-  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-599-  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-600-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-601-    return { thinkingLevel: mapThinkingLevel("LOW") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-602-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-603-  if (isGemini3FlashModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-604-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-605-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-606-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-607-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-608-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-609-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-610-  // Gemini 2.x supports disabling via thinkingBudget = 0.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-611-  return { thinkingBudget: 0 };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-612-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-613-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:614:export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-615-  return /gemma-?4/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-616-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-617-
 /app/node_modules/@openclaw/ai/src/providers/google-shared.ts:618:function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-619-  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-620-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-621-
 /app/node_modules/@openclaw/ai/src/providers/google-shared.ts:622:function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-623-  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-624-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-625-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-626-function getGoogleThinkingLevel<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-627-  effort: ClampedGoogleThinkingLevel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-628-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-629-  config?: { includeGemma4?: boolean },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-630-): GoogleThinkingLevel {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-631-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-632-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-633-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-634-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-635-        return "LOW";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-636-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-637-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-638-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-639-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-640-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-641-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-642-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-643-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-644-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-645-        return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-646-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-647-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-648-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-649-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-650-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-651-  switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-652-    case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-653-      return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-654-    case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-655-      return "LOW";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-656-    case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-657-      return "MEDIUM";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-658-    case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-659-      return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-660-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-661-  return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-662-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-663-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-664-function getGoogleBudget<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-665-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-666-  effort: ClampedGoogleThinkingLevel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-667-  customBudgets?: ThinkingBudgets,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-668-  config?: { useFlashLiteBudgets?: boolean },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-669-): number {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-670-  if (customBudgets?.[effort] !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-671-    return customBudgets[effort];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-672-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-673-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-674-  if (model.id.includes("2.5-pro")) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-675-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-676-      minimal: 128,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-677-      low: 2048,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-678-      medium: 8192,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-679-      high: 32768,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-680-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-681-    return budgets[effort];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-682-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-683-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-684-  if (config?.useFlashLiteBudgets && model.id.includes("2.5-flash-lite")) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-685-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-686-      minimal: 512,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-687-      low: 2048,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-688-      medium: 8192,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-689-      high: 24576,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-690-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-691-    return budgets[effort];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-692-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-693-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-694-  if (model.id.includes("2.5-flash")) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-695-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-696-      minimal: 128,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-697-      low: 2048,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-698-      medium: 8192,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-699-      high: 24576,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-700-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-701-    return budgets[effort];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-702-  }
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-1-// Google shared conversion tests cover runtime-to-Google payload conversion.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-2-import { describe, expect, it } from "vitest";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-3-import type { Context, Tool } from "../types.js";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-4-import { convertMessages, convertTools } from "./google-shared.js";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-5-import {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-6-  asRecord,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-7-  expectConvertedRoles,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-8-  getFirstToolParameters,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-9-  makeGeminiCliAssistantMessage,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-10-  makeGeminiCliModel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-11-  makeGoogleAssistantMessage,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-12-  makeModel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-13-} from "./google-shared.test-helpers.js";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-14-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts:15:type GoogleSharedTestModel = ReturnType<typeof makeModel> | ReturnType<typeof makeGeminiCliModel>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-16-const convertMessagesForTest = convertMessages as unknown as (
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts:17:  model: GoogleSharedTestModel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-18-  context: Context,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-19-) => ReturnType<typeof convertMessages>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-20-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-21-function requireRecordProperty(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-22-  record: Record<string, unknown>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-23-  key: string,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-24-): Record<string, unknown> {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-25-  const value = record[key];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-26-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-27-    throw new Error(`expected object property ${key}`);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-28-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-29-  return value as Record<string, unknown>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-30-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-31-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-32-describe("google-shared convertTools", () => {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-33-  it("preserves parameters when type is missing", () => {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-34-    const tools = [
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-35-      {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-36-        name: "noType",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-37-        description: "Tool with properties but no type",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-38-        parameters: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-39-          properties: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-40-            action: { type: "string" },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-41-          },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-42-          required: ["action"],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-43-        },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-44-      },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-45-    ] as unknown as Tool[];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-46-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-47-    const converted = convertTools(tools);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-48-    const params = getFirstToolParameters(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-49-      converted as Parameters<typeof getFirstToolParameters>[0],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-50-    );
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-51-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-52-    expect(params.type).toBeUndefined();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-53-    expect(params.properties).toEqual({
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-54-      action: { type: "string" },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-55-    });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-56-    expect(params.required).toEqual(["action"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-57-  });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-58-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-59-  it("keeps unsupported JSON Schema keywords intact", () => {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-60-    const tools = [
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-61-      {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-62-        name: "example",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-63-        description: "Example tool",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-64-        parameters: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-65-          type: "object",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-66-          patternProperties: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-67-            "^x-": { type: "string" },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-68-          },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-69-          additionalProperties: false,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-70-          properties: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-71-            mode: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-72-              type: "string",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-73-              const: "fast",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-74-            },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-75-            options: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-76-              anyOf: [{ type: "string" }, { type: "number" }],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-77-            },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-78-            list: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-79-              type: "array",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-80-              items: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-81-                type: "string",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-82-                const: "item",
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-83-              },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-84-            },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-85-          },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-86-          required: ["mode"],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-87-        },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-88-      },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-89-    ] as unknown as Tool[];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-90-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-91-    const converted = convertTools(tools);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-92-    const params = getFirstToolParameters(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-93-      converted as Parameters<typeof getFirstToolParameters>[0],
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-94-    );
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-95-    const properties = asRecord(params.properties);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-96-    const mode = asRecord(properties.mode);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.convert.test.ts-97-    const options = asRecord(properties.options);
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-435-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-436-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-437-export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-438-  stream: AssistantMessageEventStream;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-439-  model: Model<T>;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-440-  output: AssistantMessage;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-441-  options?: Pick<StreamOptions, "signal" | "onPayload">;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-442-  createClient: () => GoogleGenerateContentClient;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-443-  buildParams: () => GenerateContentParameters;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-444-  nextToolCallId: (name: string | undefined) => string;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-445-}): Promise<void> {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-446-  const { stream, model, output, options } = params;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-447-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-448-  try {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-449-    const client = params.createClient();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-450-    let requestParams = params.buildParams();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-451-    const nextParams = await options?.onPayload?.(requestParams, model);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-452-    if (nextParams !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-453-      requestParams = nextParams as GenerateContentParameters;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-454-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:455:    const googleStream = await client.models.generateContentStream(requestParams);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-456-    await consumeGoogleGenerateContentStream({
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-457-      chunks: googleStream,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-458-      model,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-459-      output,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-460-      stream,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-461-      signal: options?.signal,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-462-      nextToolCallId: params.nextToolCallId,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-463-    });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-464-  } catch (error) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-465-    for (const block of output.content) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-466-      if ("index" in block) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-467-        delete (block as { index?: number }).index;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-468-      }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-469-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-470-    output.stopReason = options?.signal?.aborted ? "aborted" : "error";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-471-    output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-472-    stream.push({ type: "error", reason: output.stopReason, error: output });
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-473-    stream.end();
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-474-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-475-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-476-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-477-export function buildGoogleGenerateContentParams<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-478-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-479-  context: Context,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-480-  options: GoogleProviderOptions = {},
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-481-  configHooks?: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-482-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-483-    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-484-  },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-485-): GenerateContentParameters {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-486-  const contents = convertMessages(model, context);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-487-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-488-  const generationConfig: GenerateContentConfig = {};
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-489-  if (options.temperature !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-490-    generationConfig.temperature = options.temperature;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-491-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-492-  if (options.maxTokens !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-493-    generationConfig.maxOutputTokens = options.maxTokens;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-494-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-495-  if (options.stop !== undefined && options.stop.length > 0) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-496-    generationConfig.stopSequences = options.stop;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-497-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-498-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-499-  const config: GenerateContentConfig = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-500-    ...(Object.keys(generationConfig).length > 0 && generationConfig),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-501-    ...(context.systemPrompt && {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-502-      systemInstruction: sanitizeSurrogates(stripSystemPromptCacheBoundary(context.systemPrompt)),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-503-    }),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-504-    ...(context.tools && context.tools.length > 0 && { tools: convertTools(context.tools) }),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-505-  };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-506-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-507-  if (context.tools && context.tools.length > 0 && options.toolChoice) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-508-    config.toolConfig = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-509-      functionCallingConfig: {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-510-        mode: mapToolChoice(options.toolChoice),
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-511-      },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-512-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-513-  } else {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-514-    config.toolConfig = undefined;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-515-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-516-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-517-  if (options.thinking?.enabled && model.reasoning) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-518-    const thinkingConfig: ThinkingConfig = { includeThoughts: true };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-519-    if (options.thinking.level !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-520-      thinkingConfig.thinkingLevel = configHooks?.mapThinkingLevel
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-521-        ? configHooks.mapThinkingLevel(options.thinking.level)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-522-        : (options.thinking.level as ThinkingConfig["thinkingLevel"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-523-    } else if (options.thinking.budgetTokens !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-524-      thinkingConfig.thinkingBudget = options.thinking.budgetTokens;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-525-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-526-    config.thinkingConfig = thinkingConfig;
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-527-  } else if (model.reasoning && options.thinking && !options.thinking.enabled) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-528-    config.thinkingConfig = configHooks?.getDisabledThinkingConfig
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-529-      ? configHooks.getDisabledThinkingConfig(model)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-530-      : getDisabledGoogleThinkingConfig(model);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-531-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-532-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-533-  if (options.signal) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-534-    if (options.signal.aborted) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-535-      throw new Error("Request aborted");
---
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-594-      ? config.mapThinkingLevel(level)
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-595-      : (level as ThinkingConfig["thinkingLevel"]);
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-596-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-597-  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-598-  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-599-  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-600-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-601-    return { thinkingLevel: mapThinkingLevel("LOW") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-602-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-603-  if (isGemini3FlashModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-604-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-605-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-606-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-607-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-608-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-609-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-610-  // Gemini 2.x supports disabling via thinkingBudget = 0.
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-611-  return { thinkingBudget: 0 };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-612-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-613-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:614:export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-615-  return /gemma-?4/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-616-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-617-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:618:function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-619-  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-620-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-621-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:622:function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-623-  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-624-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-625-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-626-function getGoogleThinkingLevel<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-627-  effort: ClampedGoogleThinkingLevel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-628-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-629-  config?: { includeGemma4?: boolean },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-630-): GoogleThinkingLevel {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-631-  if (isGemini3ProModel(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-632-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-633-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-634-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-635-        return "LOW";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-636-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-637-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-638-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-639-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-640-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-641-  if (config?.includeGemma4 && isGemma4Model(model)) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-642-    switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-643-      case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-644-      case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-645-        return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-646-      case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-647-      case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-648-        return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-649-    }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-650-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-651-  switch (effort) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-652-    case "minimal":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-653-      return "MINIMAL";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-654-    case "low":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-655-      return "LOW";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-656-    case "medium":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-657-      return "MEDIUM";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-658-    case "high":
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-659-      return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-660-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-661-  return "HIGH";
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-662-}
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-663-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-664-function getGoogleBudget<T extends GoogleApiType>(
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-665-  model: Model<T>,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-666-  effort: ClampedGoogleThinkingLevel,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-667-  customBudgets?: ThinkingBudgets,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-668-  config?: { useFlashLiteBudgets?: boolean },
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-669-): number {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-670-  if (customBudgets?.[effort] !== undefined) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-671-    return customBudgets[effort];
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-672-  }
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-673-
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-674-  if (model.id.includes("2.5-pro")) {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-675-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-676-      minimal: 128,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-677-      low: 2048,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-678-      medium: 8192,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-679-      high: 32768,
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-680-    };
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-681-    return budgets[effort];
-aihome@AIHome:~/actions-runner$ 
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:628:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:665:  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:741:  model: Model<T>;
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:100:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:236:function getAnthropicCompat(model: Model<"anthropic-messages">): Required<AnthropicMessagesCompat> {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:502:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:964:function supportsAdaptiveThinking(model: Model<"anthropic-messages">): boolean {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:969:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:987:function supportsNativeXhighEffort(model: Model<"anthropic-messages">): boolean {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:996:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1041:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1134:function supportsAnthropicServerSideFallback(model: Model<"anthropic-messages">): boolean {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1142:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1295:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1433:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.ts:1740:  model: Model<"anthropic-messages">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:238:  model: Model<"openai-chatgpt-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:529:> = (model: Model<"openai-chatgpt-responses">, context: Context, options?: SimpleStreamOptions) => {
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:547:  model: Model<"openai-chatgpt-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:610:  model: Pick<Model<"openai-chatgpt-responses">, "id">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:626:  model: Pick<Model<"openai-chatgpt-responses">, "id">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:685:  model: Model<"openai-chatgpt-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.ts:1550:  model: Model<"openai-chatgpt-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-chatgpt-responses.test.ts:122:  } satisfies Model<"openai-chatgpt-responses">;
+/app/node_modules/@openclaw/ai/src/providers/google-client-auth.test.ts:37:function googleModel(): Model<"google-generative-ai"> {
+/app/node_modules/@openclaw/ai/src/providers/google-client-auth.test.ts:52:function vertexModel(): Model<"google-vertex"> {
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:118:  model: Model<"mistral-conversations">,
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:196:  model: Model<"mistral-conversations">,
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:222:function createOutput(model: Model<"mistral-conversations">): AssistantMessage {
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:310:function buildRequestOptions(model: Model<"mistral-conversations">, options?: MistralOptions) {
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:344:  model: Model<"mistral-conversations">,
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:396:  model: Model<"mistral-conversations">,
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:767:function usesReasoningEffort(model: Model<"mistral-conversations">): boolean {
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:775:function usesPromptModeReasoning(model: Model<"mistral-conversations">): boolean {
+/app/node_modules/@openclaw/ai/src/providers/mistral.ts:780:  model: Model<"mistral-conversations">,
+/app/node_modules/@openclaw/ai/src/providers/anthropic.test.ts:37:function makeAnthropicModel(overrides: Partial<Model<"anthropic-messages">> = {}) {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.test.ts:50:  } satisfies Model<"anthropic-messages">;
+/app/node_modules/@openclaw/ai/src/providers/anthropic.fetch-loopback.test.ts:19:function makeModel(overrides: Partial<Model<"anthropic-messages">>) {
+/app/node_modules/@openclaw/ai/src/providers/anthropic.fetch-loopback.test.ts:32:  } satisfies Model<"anthropic-messages">;
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:36:function getCompat(model: Model<"openai-responses">): ResolvedOpenAIResponsesCompat {
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:82:  model: Model<"openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:116:> = (model: Model<"openai-responses">, context: Context, options?: SimpleStreamOptions) => {
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:133:  model: Model<"openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:186:  model: Model<"openai-responses">,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:228:  model: Pick<Model<"openai-responses">, "id">,
+/app/node_modules/@openclaw/ai/src/providers/openai-responses.ts:244:  model: Pick<Model<"openai-responses">, "id">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:43:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:70:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:82:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:97:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:112:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/providers/google-vertex.ts:186:  model: Model<"google-vertex">,
+/app/node_modules/@openclaw/ai/src/api-registry.ts:59:    return stream(model as Model<TApi>, context, options as TOptions);
+/app/node_modules/@openclaw/ai/src/api-registry.ts:71:    return streamSimple(model as Model<TApi>, context, options);
+/app/node_modules/@openclaw/ai/src/stream.ts:25:    model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/stream.ts:33:    model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/stream.ts:41:    model: Model<TApi>,
+/app/node_modules/@openclaw/ai/src/stream.ts:49:    model: Model<TApi>,
