@@ -1,94 +1,10 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1235,1325p" /app/dist/model-wpoKGSDF.js
+sed -n "1325,1425p" /app/dist/model-wpoKGSDF.js
 '
-	if (!model && !explicitModel && options?.retryTransientProviderRuntimeMiss) model = await resolveDynamicAttempt();
-	if (!model && !explicitModel && options?.allowBundledStaticCatalogFallback) model = await resolveStaticCatalogFallbackModel();
-	if (!model && !explicitModel && options?.allowBundledStaticCatalogFallback) model = resolveConfiguredFallbackModel({
-		provider: normalizedRef.provider,
-		modelId: normalizedRef.model,
-		cfg,
-		agentDir: resolvedAgentDir,
-		workspaceDir,
-		runtimeHooks
-	});
-	if (model && options?.allowBundledStaticCatalogFallback) {
-		const staticMediaInput = (await resolveStaticCatalogModel())?.mediaInput;
-		const resolvedMediaInput = model.mediaInput;
-		const mediaInput = mergeModelMediaInput(staticMediaInput, resolvedMediaInput);
-		if (mediaInput) model = {
-			...model,
-			mediaInput
-		};
-	}
-	if (model) return {
-		model,
-		authStorage,
-		modelRegistry
-	};
-	return {
-		error: buildUnknownModelError({
-			provider: normalizedRef.provider,
-			modelId: normalizedRef.model,
-			cfg,
-			agentDir: resolvedAgentDir,
-			workspaceDir,
-			runtimeHooks
-		}),
-		authStorage,
-		modelRegistry
-	};
-}
-/**
-* Build a more helpful error when the model is not found.
-*
-* Some provider plugins only become available after setup/auth has registered
-* them. When users point `agents.defaults.model.primary` at one of those
-* providers before setup, the raw `Unknown model` error is too vague. Provider
-* plugins can append a targeted recovery hint here.
-*
-* See: https://github.com/openclaw/openclaw/issues/17328
-*/
-function buildUnknownModelError(params) {
-	const suppressed = buildSuppressedBuiltInModelError({
-		provider: params.provider,
-		id: params.modelId,
-		...params.cfg ? { config: params.cfg } : {},
-		...params.workspaceDir ? { workspaceDir: params.workspaceDir } : {}
-	});
-	if (suppressed) return suppressed;
-	const base = `Unknown model: ${params.provider}/${params.modelId}`;
-	const registrationHint = buildMissingProviderModelRegistrationHint({
-		provider: params.provider,
-		modelId: params.modelId,
-		cfg: params.cfg
-	});
-	if (registrationHint) return `${base}. ${registrationHint}`;
-	const hint = (params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS).buildProviderUnknownModelHintWithPlugin({
-		provider: params.provider,
-		config: params.cfg,
-		workspaceDir: params.workspaceDir,
-		env: process.env,
-		context: {
-			config: params.cfg,
-			agentDir: params.agentDir,
-			workspaceDir: params.workspaceDir,
-			env: process.env,
-			provider: params.provider,
-			modelId: params.modelId
-		}
-	});
-	return hint ? `${base}. ${hint}` : base;
-}
-function buildMissingProviderModelRegistrationHint(params) {
-	if (normalizeProviderId(params.provider) === "openai-codex") return `"openai-codex" is a legacy provider ID. Run \`openclaw doctor --fix\` to migrate legacy model and provider config to the current OpenAI format. If the provider has no authenticated profile, run \`openclaw models status\` to check provider auth and re-authenticate if needed. See https://docs.openclaw.ai/concepts/model-providers.`;
-	const configuredModels = params.cfg?.agents?.defaults?.models;
-	if (!configuredModels) return;
-	const agentModelKey = modelKey(params.provider, params.modelId);
-	const configuredEntry = configuredModels[agentModelKey] ?? configuredModels[`${params.provider}/${params.modelId}`];
-	if (!configuredEntry) return;
-	const agentRuntimeId = configuredEntry.agentRuntime?.id;
-	if (agentRuntimeId) return `Found agents.defaults.models["${agentModelKey}"] bound to the "${agentRuntimeId}" agent runtime. Models served by an agent runtime come from that runtime and its linked account, not from models.providers["${params.provider}"].models[] — registering it there will not make it usable. Confirm "${params.modelId}" is still offered by the "${agentRuntimeId}" runtime and switch agents.defaults.model.primary to a currently available model (run \`openclaw models list --provider ${params.provider}\` to list them). See https://docs.openclaw.ai/concepts/model-providers.`;
-	const providerConfig = findNormalizedProviderValue(params.cfg?.models?.providers, params.provider);
-	if ((Array.isArray(providerConfig?.models) ? providerConfig.models : []).some((entry) => {
-		if (!entry || typeof entry !== "object" || !("id" in entry)) return false;
 		const id = entry.id;
+		return typeof id === "string" && id === params.modelId;
+	})) return;
+	return `Found agents.defaults.models["${agentModelKey}"], but no matching models.providers["${params.provider}"].models[] entry. Add { "id": "${params.modelId}", "name": "${params.modelId}" } to models.providers["${params.provider}"].models[] to register this provider model. For custom or proxy providers, also set api and baseUrl so requests route to the intended endpoint. See https://docs.openclaw.ai/concepts/model-providers.`;
+}
+//#endregion
+export { resolveModelAsync as n, resolveModelWithRegistry as r, resolveModel as t };
