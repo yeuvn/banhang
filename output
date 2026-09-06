@@ -1,66 +1,71 @@
 aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-set -e
-echo "=== MODEL STATUS ==="
-openclaw models status
-
+set -x
+openclaw models list --help
 echo
-echo "=== MODEL AUTH ==="
-openclaw models auth --help
-
-echo
-echo "=== CONFIG MODEL ==="
-grep -n -A5 -B3 "primary" /data/config/openclaw.json5
+openclaw models status --json
 '
-=== MODEL STATUS ===
-Config        : /data/config/openclaw.json5
-Agent dir     : /data/state/agents/main/agent
-Default       : google/gemini-3.6-flash
-Fallbacks (0) : -
-Image model   : -
-Image fallbacks (0): -
-Aliases (0)   : -
-Configured models (0): all
-
-Auth overview
-Auth store    : /data/state/agents/main/agent/openclaw-agent.sqlite
-Shell env     : off
-Providers w/ OAuth/tokens (0): -
-- google effective=env:AQ.Ab8RN...mgze6WVw | env=AQ.Ab8RN...mgze6WVw | source=env: GEMINI_API_KEY
-
-OAuth/token status
-- none
-
-=== MODEL AUTH ===
++ openclaw models list --help
 
 OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
 
-Usage: openclaw models auth [options] [command]
+Usage: openclaw models list [options]
 
-Manage model auth profiles
+List models (configured by default)
 
 Options:
-  --agent <id>          Agent id for auth commands
-  -h, --help            Display help for command
+  --all            Show full model catalog (default: false)
+  -h, --help       Display help for command
+  --json           Output JSON (default: false)
+  --local          Filter to local models (default: false)
+  --plain          Plain line output (default: false)
+  --provider <id>  Filter by provider id
++ echo
++ openclaw models status --json
 
-Commands:
-  add                   Interactive auth helper (provider auth or paste token)
-  list                  List saved auth profiles
-  login                 Run a provider plugin auth flow (OAuth/API key)
-  login-github-copilot  Login to GitHub Copilot via GitHub device flow (TTY
-                        required)
-  order                 Manage per-agent auth profile order overrides
-  paste-api-key         Paste an API key into auth-profiles.json and update
-                        config
-  paste-token           Paste a token into auth-profiles.json and update config
-  setup-token           Run a provider CLI to create/sync a token (TTY required)
-
-=== CONFIG MODEL ===
-10-  agents: {
-11-    defaults: {
-12-      model: {
-13:        primary: "google/gemini-3.6-flash",
-14-        fallbacks: [],
-15-      },
-16-      skills: [],
-17-      subagents: {
-18-        maxConcurrent: 1,
+{
+  "configPath": "/data/config/openclaw.json5",
+  "agentDir": "/data/state/agents/main/agent",
+  "defaultModel": "google/gemini-3.6-flash",
+  "resolvedDefault": "google/gemini-3.6-flash",
+  "fallbacks": [],
+  "imageModel": null,
+  "imageFallbacks": [],
+  "aliases": {},
+  "allowed": [],
+  "auth": {
+    "storePath": "/data/state/agents/main/agent/openclaw-agent.sqlite",
+    "shellEnvFallback": {
+      "enabled": false,
+      "appliedKeys": []
+    },
+    "providersWithOAuth": [],
+    "missingProvidersInUse": [],
+    "runtimeAuthRoutes": [],
+    "providers": [
+      {
+        "provider": "google",
+        "effective": {
+          "kind": "env",
+          "detail": "AQ.Ab8RN...mgze6WVw"
+        },
+        "profiles": {
+          "count": 0,
+          "oauth": 0,
+          "token": 0,
+          "apiKey": 0,
+          "labels": []
+        },
+        "env": {
+          "value": "AQ.Ab8RN...mgze6WVw",
+          "source": "env: GEMINI_API_KEY"
+        }
+      }
+    ],
+    "unusableProfiles": [],
+    "oauth": {
+      "warnAfterMs": 86400000,
+      "profiles": [],
+      "providers": []
+    }
+  }
+}
