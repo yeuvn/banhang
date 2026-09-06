@@ -1,158 +1,90 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -n -A60 -B15 \
-  "class ModelRegistry\|function createModelRegistry" \
-  /app/dist/models-DAAxCAOz.js \
-  2>/dev/null
+grep -R -n -A140 -B30 \
+  "function createOpenClawModelRegistry\|const createOpenClawModelRegistry\|createOpenClawModelRegistry =" \
+  /app/dist \
+  2>/dev/null | head -400
 '
-aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -n -A80 -B20 \
-  "class ModelRegistry\|function createModelRegistry\|modelRegistry =" \
-  /app/dist/models-DAAxCAOz.js \
-  /app/dist/model-wpoKGSDF.js \
-  /app/dist/provider-model-shared-BK8T_tBM.js \
-  2>/dev/null
-'
-/app/dist/model-wpoKGSDF.js-1041-			provider: scopedParams.provider,
-/app/dist/model-wpoKGSDF.js-1042-			modelId: scopedParams.modelId,
-/app/dist/model-wpoKGSDF.js-1043-			explicitModel
-/app/dist/model-wpoKGSDF.js-1044-		}) ? void 0 : explicitModel.model);
-/app/dist/model-wpoKGSDF.js-1045-	}
-/app/dist/model-wpoKGSDF.js-1046-	const pluginDynamicModel = resolvePluginDynamicModelWithRegistry(scopedParams);
-/app/dist/model-wpoKGSDF.js-1047-	if (pluginDynamicModel) return pluginDynamicModel;
-/app/dist/model-wpoKGSDF.js-1048-	return params.skipConfiguredFallback ? void 0 : resolveConfiguredFallbackModel(scopedParams);
-/app/dist/model-wpoKGSDF.js-1049-}
-/app/dist/model-wpoKGSDF.js-1050-function resolveModel(provider, modelId, agentDir, cfg, options) {
-/app/dist/model-wpoKGSDF.js-1051-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
-/app/dist/model-wpoKGSDF.js-1052-	const normalizedRef = normalizeProviderModelRef({
-/app/dist/model-wpoKGSDF.js-1053-		provider,
-/app/dist/model-wpoKGSDF.js-1054-		modelId,
-/app/dist/model-wpoKGSDF.js-1055-		cfg,
-/app/dist/model-wpoKGSDF.js-1056-		workspaceDir
-/app/dist/model-wpoKGSDF.js-1057-	});
-/app/dist/model-wpoKGSDF.js-1058-	const resolvedAgentDir = agentDir ?? resolveDefaultAgentDir(cfg ?? {});
-/app/dist/model-wpoKGSDF.js-1059-	const cachedStores = !options?.authStorage && !options?.modelRegistry ? discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) : void 0;
-/app/dist/model-wpoKGSDF.js-1060-	const authStorage = options?.authStorage ?? cachedStores?.authStorage ?? discoverAuthStorage(resolvedAgentDir);
-/app/dist/model-wpoKGSDF.js:1061:	const modelRegistry = options?.modelRegistry ?? cachedStores?.modelRegistry ?? discoverModels(authStorage, resolvedAgentDir);
-/app/dist/model-wpoKGSDF.js-1062-	const runtimeHooks = resolveRuntimeHooks(options);
-/app/dist/model-wpoKGSDF.js-1063-	const model = resolveModelWithRegistry({
-/app/dist/model-wpoKGSDF.js-1064-		provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1065-		modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1066-		modelRegistry,
-/app/dist/model-wpoKGSDF.js-1067-		cfg,
-/app/dist/model-wpoKGSDF.js-1068-		agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1069-		workspaceDir,
-/app/dist/model-wpoKGSDF.js-1070-		authProfileId: options?.authProfileId,
-/app/dist/model-wpoKGSDF.js-1071-		preferredProfile: options?.preferredProfile,
-/app/dist/model-wpoKGSDF.js-1072-		runtimeHooks
-/app/dist/model-wpoKGSDF.js-1073-	});
-/app/dist/model-wpoKGSDF.js-1074-	if (model) return {
-/app/dist/model-wpoKGSDF.js-1075-		model,
-/app/dist/model-wpoKGSDF.js-1076-		authStorage,
-/app/dist/model-wpoKGSDF.js-1077-		modelRegistry
-/app/dist/model-wpoKGSDF.js-1078-	};
-/app/dist/model-wpoKGSDF.js-1079-	return {
-/app/dist/model-wpoKGSDF.js-1080-		error: buildUnknownModelError({
-/app/dist/model-wpoKGSDF.js-1081-			provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1082-			modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1083-			cfg,
-/app/dist/model-wpoKGSDF.js-1084-			agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1085-			workspaceDir,
-/app/dist/model-wpoKGSDF.js-1086-			runtimeHooks
-/app/dist/model-wpoKGSDF.js-1087-		}),
-/app/dist/model-wpoKGSDF.js-1088-		authStorage,
-/app/dist/model-wpoKGSDF.js-1089-		modelRegistry
-/app/dist/model-wpoKGSDF.js-1090-	};
-/app/dist/model-wpoKGSDF.js-1091-}
-/app/dist/model-wpoKGSDF.js-1092-async function resolveModelAsync(provider, modelId, agentDir, cfg, options) {
-/app/dist/model-wpoKGSDF.js-1093-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
-/app/dist/model-wpoKGSDF.js-1094-	const normalizedRef = normalizeProviderModelRef({
-/app/dist/model-wpoKGSDF.js-1095-		provider,
-/app/dist/model-wpoKGSDF.js-1096-		modelId,
-/app/dist/model-wpoKGSDF.js-1097-		cfg,
-/app/dist/model-wpoKGSDF.js-1098-		workspaceDir
-/app/dist/model-wpoKGSDF.js-1099-	});
-/app/dist/model-wpoKGSDF.js-1100-	const resolvedAgentDir = agentDir ?? resolveDefaultAgentDir(cfg ?? {});
-/app/dist/model-wpoKGSDF.js-1101-	const emptyDiscoveryStores = options?.skipAgentDiscovery && (!options.authStorage || !options.modelRegistry) ? createEmptyAgentDiscoveryStores() : void 0;
-/app/dist/model-wpoKGSDF.js-1102-	const cachedStores = !emptyDiscoveryStores && !options?.authStorage && !options?.modelRegistry ? discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) : void 0;
-/app/dist/model-wpoKGSDF.js-1103-	const authStorage = options?.authStorage ?? emptyDiscoveryStores?.authStorage ?? cachedStores?.authStorage ?? discoverAuthStorage(resolvedAgentDir);
-/app/dist/model-wpoKGSDF.js:1104:	const modelRegistry = options?.modelRegistry ?? emptyDiscoveryStores?.modelRegistry ?? cachedStores?.modelRegistry ?? discoverModels(authStorage, resolvedAgentDir);
-/app/dist/model-wpoKGSDF.js-1105-	const runtimeHooks = resolveRuntimeHooks(options);
-/app/dist/model-wpoKGSDF.js-1106-	const explicitModel = resolveExplicitModelWithRegistry({
-/app/dist/model-wpoKGSDF.js-1107-		provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1108-		modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1109-		modelRegistry,
-/app/dist/model-wpoKGSDF.js-1110-		cfg,
-/app/dist/model-wpoKGSDF.js-1111-		agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1112-		workspaceDir,
-/app/dist/model-wpoKGSDF.js-1113-		runtimeHooks
-/app/dist/model-wpoKGSDF.js-1114-	});
-/app/dist/model-wpoKGSDF.js-1115-	if (explicitModel?.kind === "suppressed") {
-/app/dist/model-wpoKGSDF.js-1116-		const suppressedRuntimeModel = resolveRuntimePreferredSuppressedModel({
-/app/dist/model-wpoKGSDF.js-1117-			provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1118-			modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1119-			modelRegistry,
-/app/dist/model-wpoKGSDF.js-1120-			cfg,
-/app/dist/model-wpoKGSDF.js-1121-			agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1122-			workspaceDir,
-/app/dist/model-wpoKGSDF.js-1123-			authProfileId: options?.authProfileId,
-/app/dist/model-wpoKGSDF.js-1124-			preferredProfile: options?.preferredProfile,
-/app/dist/model-wpoKGSDF.js-1125-			runtimeHooks
-/app/dist/model-wpoKGSDF.js-1126-		});
-/app/dist/model-wpoKGSDF.js-1127-		if (suppressedRuntimeModel) return {
-/app/dist/model-wpoKGSDF.js-1128-			model: suppressedRuntimeModel,
-/app/dist/model-wpoKGSDF.js-1129-			authStorage,
-/app/dist/model-wpoKGSDF.js-1130-			modelRegistry
-/app/dist/model-wpoKGSDF.js-1131-		};
-/app/dist/model-wpoKGSDF.js-1132-		return {
-/app/dist/model-wpoKGSDF.js-1133-			error: buildUnknownModelError({
-/app/dist/model-wpoKGSDF.js-1134-				provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1135-				modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1136-				cfg,
-/app/dist/model-wpoKGSDF.js-1137-				agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1138-				workspaceDir,
-/app/dist/model-wpoKGSDF.js-1139-				runtimeHooks
-/app/dist/model-wpoKGSDF.js-1140-			}),
-/app/dist/model-wpoKGSDF.js-1141-			authStorage,
-/app/dist/model-wpoKGSDF.js-1142-			modelRegistry
-/app/dist/model-wpoKGSDF.js-1143-		};
-/app/dist/model-wpoKGSDF.js-1144-	}
-/app/dist/model-wpoKGSDF.js-1145-	const providerConfig = resolveConfiguredProviderConfig(cfg, normalizedRef.provider);
-/app/dist/model-wpoKGSDF.js-1146-	const authProfile = resolveDynamicModelAuthProfile({
-/app/dist/model-wpoKGSDF.js-1147-		provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1148-		cfg,
-/app/dist/model-wpoKGSDF.js-1149-		agentDir: resolvedAgentDir,
-/app/dist/model-wpoKGSDF.js-1150-		authProfileId: options?.authProfileId,
-/app/dist/model-wpoKGSDF.js-1151-		preferredProfile: options?.preferredProfile
-/app/dist/model-wpoKGSDF.js-1152-	});
-/app/dist/model-wpoKGSDF.js-1153-	let staticCatalogLookup;
-/app/dist/model-wpoKGSDF.js-1154-	const resolveStaticCatalogModel = async () => {
-/app/dist/model-wpoKGSDF.js-1155-		if (!options?.allowBundledStaticCatalogFallback) return;
-/app/dist/model-wpoKGSDF.js-1156-		staticCatalogLookup ??= (async () => {
-/app/dist/model-wpoKGSDF.js-1157-			const manifestModel = resolveBundledStaticCatalogModel({
-/app/dist/model-wpoKGSDF.js-1158-				provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1159-				modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1160-				cfg,
-/app/dist/model-wpoKGSDF.js-1161-				workspaceDir
-/app/dist/model-wpoKGSDF.js-1162-			});
-/app/dist/model-wpoKGSDF.js-1163-			if (manifestModel) return manifestModel;
-/app/dist/model-wpoKGSDF.js-1164-			return await resolveBundledProviderStaticCatalogModel({
-/app/dist/model-wpoKGSDF.js-1165-				provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1166-				modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1167-				cfg,
-/app/dist/model-wpoKGSDF.js-1168-				workspaceDir
-/app/dist/model-wpoKGSDF.js-1169-			});
-/app/dist/model-wpoKGSDF.js-1170-		})();
-/app/dist/model-wpoKGSDF.js-1171-		return await staticCatalogLookup;
-/app/dist/model-wpoKGSDF.js-1172-	};
-/app/dist/model-wpoKGSDF.js-1173-	const resolveStaticCatalogFallbackModel = async () => {
-/app/dist/model-wpoKGSDF.js-1174-		const catalogModel = await resolveStaticCatalogModel();
-/app/dist/model-wpoKGSDF.js-1175-		if (!catalogModel) return;
-/app/dist/model-wpoKGSDF.js-1176-		const overriddenStaticCatalogModel = applyConfiguredProviderOverrides({
-/app/dist/model-wpoKGSDF.js-1177-			provider: normalizedRef.provider,
-/app/dist/model-wpoKGSDF.js-1178-			discoveredModel: catalogModel,
-/app/dist/model-wpoKGSDF.js-1179-			providerConfig,
-/app/dist/model-wpoKGSDF.js-1180-			modelId: normalizedRef.model,
-/app/dist/model-wpoKGSDF.js-1181-			cfg,
-/app/dist/model-wpoKGSDF.js-1182-			runtimeHooks,
-/app/dist/model-wpoKGSDF.js-1183-			workspaceDir,
-/app/dist/model-wpoKGSDF.js-1184-			preferDiscoveredModelMetadata: true,
+/app/dist/agent-model-discovery-BuQHUPIv.js-143-//#region src/agents/agent-model-discovery.ts
+/app/dist/agent-model-discovery-BuQHUPIv.js-144-/** Discovers agent models and auth storage with provider/plugin normalization hooks. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-145-/** Applies plugin model normalization and transport hooks to discovered agent models. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-146-function normalizeDiscoveredAgentModel(value, agentDir) {
+/app/dist/agent-model-discovery-BuQHUPIv.js-147-	if (!isRecord(value)) return value;
+/app/dist/agent-model-discovery-BuQHUPIv.js-148-	if (typeof value.id !== "string" || typeof value.name !== "string" || typeof value.provider !== "string") return value;
+/app/dist/agent-model-discovery-BuQHUPIv.js-149-	const model = value;
+/app/dist/agent-model-discovery-BuQHUPIv.js-150-	const pluginNormalized = normalizeProviderResolvedModelWithPlugin({
+/app/dist/agent-model-discovery-BuQHUPIv.js-151-		provider: model.provider,
+/app/dist/agent-model-discovery-BuQHUPIv.js-152-		modelId: model.id,
+/app/dist/agent-model-discovery-BuQHUPIv.js-153-		context: {
+/app/dist/agent-model-discovery-BuQHUPIv.js-154-			provider: model.provider,
+/app/dist/agent-model-discovery-BuQHUPIv.js-155-			modelId: model.id,
+/app/dist/agent-model-discovery-BuQHUPIv.js-156-			model,
+/app/dist/agent-model-discovery-BuQHUPIv.js-157-			agentDir
+/app/dist/agent-model-discovery-BuQHUPIv.js-158-		}
+/app/dist/agent-model-discovery-BuQHUPIv.js-159-	}) ?? model;
+/app/dist/agent-model-discovery-BuQHUPIv.js-160-	const transportNormalized = applyProviderResolvedTransportWithPlugin({
+/app/dist/agent-model-discovery-BuQHUPIv.js-161-		provider: model.provider,
+/app/dist/agent-model-discovery-BuQHUPIv.js-162-		modelId: model.id,
+/app/dist/agent-model-discovery-BuQHUPIv.js-163-		context: {
+/app/dist/agent-model-discovery-BuQHUPIv.js-164-			provider: model.provider,
+/app/dist/agent-model-discovery-BuQHUPIv.js-165-			modelId: model.id,
+/app/dist/agent-model-discovery-BuQHUPIv.js-166-			model: pluginNormalized,
+/app/dist/agent-model-discovery-BuQHUPIv.js-167-			agentDir
+/app/dist/agent-model-discovery-BuQHUPIv.js-168-		}
+/app/dist/agent-model-discovery-BuQHUPIv.js-169-	}) ?? pluginNormalized;
+/app/dist/agent-model-discovery-BuQHUPIv.js-170-	if (!isRecord(transportNormalized) || typeof transportNormalized.id !== "string" || typeof transportNormalized.name !== "string" || typeof transportNormalized.provider !== "string" || typeof transportNormalized.api !== "string") return value;
+/app/dist/agent-model-discovery-BuQHUPIv.js-171-	return normalizeModelCompat(transportNormalized);
+/app/dist/agent-model-discovery-BuQHUPIv.js-172-}
+/app/dist/agent-model-discovery-BuQHUPIv.js:173:function createOpenClawModelRegistry(authStorage, modelsJsonPath, agentDir, options) {
+/app/dist/agent-model-discovery-BuQHUPIv.js-174-	const pluginMetadataSnapshot = resolveModelPluginMetadataSnapshot({
+/app/dist/agent-model-discovery-BuQHUPIv.js-175-		...options?.config ? { config: options.config } : {},
+/app/dist/agent-model-discovery-BuQHUPIv.js-176-		...options?.pluginMetadataSnapshot ? { pluginMetadataSnapshot: options.pluginMetadataSnapshot } : {},
+/app/dist/agent-model-discovery-BuQHUPIv.js-177-		...options?.workspaceDir ? { workspaceDir: options.workspaceDir } : {},
+/app/dist/agent-model-discovery-BuQHUPIv.js-178-		allowWorkspaceScopedCurrent: options?.workspaceDir === void 0,
+/app/dist/agent-model-discovery-BuQHUPIv.js-179-		useRuntimeConfig: options?.config === void 0
+/app/dist/agent-model-discovery-BuQHUPIv.js-180-	});
+/app/dist/agent-model-discovery-BuQHUPIv.js-181-	const registryOptions = pluginMetadataSnapshot ? { pluginMetadataSnapshot } : {};
+/app/dist/agent-model-discovery-BuQHUPIv.js-182-	const registry = ModelRegistry.create(authStorage, modelsJsonPath, registryOptions);
+/app/dist/agent-model-discovery-BuQHUPIv.js-183-	const getAll = registry.getAll.bind(registry);
+/app/dist/agent-model-discovery-BuQHUPIv.js-184-	const getAvailable = registry.getAvailable.bind(registry);
+/app/dist/agent-model-discovery-BuQHUPIv.js-185-	const find = registry.find.bind(registry);
+/app/dist/agent-model-discovery-BuQHUPIv.js-186-	const refresh = registry.refresh.bind(registry);
+/app/dist/agent-model-discovery-BuQHUPIv.js-187-	const providerFilter = options?.providerFilter ? normalizeProviderId(options.providerFilter) : "";
+/app/dist/agent-model-discovery-BuQHUPIv.js-188-	const matchesProviderFilter = (entry) => !providerFilter || normalizeProviderId(entry.provider) === providerFilter;
+/app/dist/agent-model-discovery-BuQHUPIv.js-189-	const shouldNormalize = options?.normalizeModels !== false;
+/app/dist/agent-model-discovery-BuQHUPIv.js-190-	const findCache = /* @__PURE__ */ new Map();
+/app/dist/agent-model-discovery-BuQHUPIv.js-191-	const normalizeEntry = (entry) => shouldNormalize ? normalizeDiscoveredAgentModel(entry, agentDir) : entry;
+/app/dist/agent-model-discovery-BuQHUPIv.js-192-	registry.getAll = () => {
+/app/dist/agent-model-discovery-BuQHUPIv.js-193-		const entries = getAll().filter((entry) => matchesProviderFilter(entry));
+/app/dist/agent-model-discovery-BuQHUPIv.js-194-		return shouldNormalize ? entries.map((entry) => normalizeDiscoveredAgentModel(entry, agentDir)) : entries;
+/app/dist/agent-model-discovery-BuQHUPIv.js-195-	};
+/app/dist/agent-model-discovery-BuQHUPIv.js-196-	registry.getAvailable = () => {
+/app/dist/agent-model-discovery-BuQHUPIv.js-197-		const entries = getAvailable().filter((entry) => matchesProviderFilter(entry));
+/app/dist/agent-model-discovery-BuQHUPIv.js-198-		return shouldNormalize ? entries.map((entry) => normalizeDiscoveredAgentModel(entry, agentDir)) : entries;
+/app/dist/agent-model-discovery-BuQHUPIv.js-199-	};
+/app/dist/agent-model-discovery-BuQHUPIv.js-200-	registry.find = (provider, modelId) => {
+/app/dist/agent-model-discovery-BuQHUPIv.js-201-		const key = `${normalizeProviderId(provider)}\0${modelId}`;
+/app/dist/agent-model-discovery-BuQHUPIv.js-202-		if (findCache.has(key)) return findCache.get(key);
+/app/dist/agent-model-discovery-BuQHUPIv.js-203-		const fallbackEntry = find(provider, modelId);
+/app/dist/agent-model-discovery-BuQHUPIv.js-204-		const resolved = fallbackEntry ? normalizeEntry(fallbackEntry) : void 0;
+/app/dist/agent-model-discovery-BuQHUPIv.js-205-		findCache.set(key, resolved);
+/app/dist/agent-model-discovery-BuQHUPIv.js-206-		return resolved;
+/app/dist/agent-model-discovery-BuQHUPIv.js-207-	};
+/app/dist/agent-model-discovery-BuQHUPIv.js-208-	registry.refresh = () => {
+/app/dist/agent-model-discovery-BuQHUPIv.js-209-		findCache.clear();
+/app/dist/agent-model-discovery-BuQHUPIv.js-210-		return refresh();
+/app/dist/agent-model-discovery-BuQHUPIv.js-211-	};
+/app/dist/agent-model-discovery-BuQHUPIv.js-212-	return registry;
+/app/dist/agent-model-discovery-BuQHUPIv.js-213-}
+/app/dist/agent-model-discovery-BuQHUPIv.js-214-/** Creates auth storage for model discovery from stored and env-backed credentials. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-215-/** Builds auth storage for model discovery without prompting for secrets. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-216-function discoverAuthStorage(agentDir, options) {
+/app/dist/agent-model-discovery-BuQHUPIv.js-217-	const credentials = options?.skipCredentials === true ? {} : resolveAgentCredentialsForDiscovery(agentDir, options);
+/app/dist/agent-model-discovery-BuQHUPIv.js-218-	return AuthStorage.inMemory(credentials);
+/app/dist/agent-model-discovery-BuQHUPIv.js-219-}
+/app/dist/agent-model-discovery-BuQHUPIv.js-220-/** Creates the model registry used by agent model discovery. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-221-/** Creates a model registry for one agent directory, optionally filtered and plugin-normalized. */
+/app/dist/agent-model-discovery-BuQHUPIv.js-222-function discoverModels(authStorage, agentDir, options) {
+/app/dist/agent-model-discovery-BuQHUPIv.js-223-	return createOpenClawModelRegistry(authStorage, path.join(agentDir, "models.json"), agentDir, options);
+/app/dist/agent-model-discovery-BuQHUPIv.js-224-}
+/app/dist/agent-model-discovery-BuQHUPIv.js-225-//#endregion
+/app/dist/agent-model-discovery-BuQHUPIv.js-226-export { addEnvBackedAgentCredentials as a, resolveAgentCredentialsForDiscovery as i, discoverModels as n, normalizeDiscoveredAgentModel as r, discoverAuthStorage as t };
