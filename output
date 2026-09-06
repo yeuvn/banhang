@@ -1,272 +1,133 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -n -E "runGoogleGenerateContentLifecycle|generateContentStream|401|Authentication|Failover" \
-/app/node_modules/@openclaw/ai/src/providers/google-shared.ts
+sed -n "437,499p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
 '
-66:    generateContentStream(
-437:export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
-455:    const googleStream = await client.models.generateContentStream(requestParams);
-aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "500,760p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
-'
-    ...(Object.keys(generationConfig).length > 0 && generationConfig),
-    ...(context.systemPrompt && {
-      systemInstruction: sanitizeSurrogates(stripSystemPromptCacheBoundary(context.systemPrompt)),
-    }),
-    ...(context.tools && context.tools.length > 0 && { tools: convertTools(context.tools) }),
-  };
-
-  if (context.tools && context.tools.length > 0 && options.toolChoice) {
-    config.toolConfig = {
-      functionCallingConfig: {
-        mode: mapToolChoice(options.toolChoice),
-      },
-    };
-  } else {
-    config.toolConfig = undefined;
-  }
-
-  if (options.thinking?.enabled && model.reasoning) {
-    const thinkingConfig: ThinkingConfig = { includeThoughts: true };
-    if (options.thinking.level !== undefined) {
-      thinkingConfig.thinkingLevel = configHooks?.mapThinkingLevel
-        ? configHooks.mapThinkingLevel(options.thinking.level)
-        : (options.thinking.level as ThinkingConfig["thinkingLevel"]);
-    } else if (options.thinking.budgetTokens !== undefined) {
-      thinkingConfig.thinkingBudget = options.thinking.budgetTokens;
-    }
-    config.thinkingConfig = thinkingConfig;
-  } else if (model.reasoning && options.thinking && !options.thinking.enabled) {
-    config.thinkingConfig = configHooks?.getDisabledThinkingConfig
-      ? configHooks.getDisabledThinkingConfig(model)
-      : getDisabledGoogleThinkingConfig(model);
-  }
-
-  if (options.signal) {
-    if (options.signal.aborted) {
-      throw new Error("Request aborted");
-    }
-    config.abortSignal = options.signal;
-  }
-
-  return {
-    model: model.id,
-    contents,
-    config,
-  };
-}
-
-export function buildGoogleSimpleThinking<T extends GoogleApiType>(
-  model: Model<T>,
-  options: SimpleStreamOptions | undefined,
-  config?: {
-    includeGemma4ThinkingLevel?: boolean;
-    useFlashLiteBudgets?: boolean;
-  },
-): GoogleThinkingOptions {
-  if (!options?.reasoning || options.reasoning === "off") {
-    return { enabled: false };
-  }
-
-  const clampedReasoning = clampThinkingLevel(model, options.reasoning);
-  const effort = (
-    clampedReasoning === "off" || clampedReasoning === "max" ? "high" : clampedReasoning
-  ) as ClampedGoogleThinkingLevel;
-
-  if (
-    isGemini3ProModel(model) ||
-    isGemini3FlashModel(model) ||
-    (config?.includeGemma4ThinkingLevel && isGemma4Model(model))
-  ) {
-    return {
-      enabled: true,
-      level: getGoogleThinkingLevel(effort, model, {
-        includeGemma4: config?.includeGemma4ThinkingLevel,
-      }),
-    };
-  }
-
-  return {
-    enabled: true,
-    budgetTokens: getGoogleBudget(model, effort, options.thinkingBudgets, {
-      useFlashLiteBudgets: config?.useFlashLiteBudgets,
-    }),
-  };
-}
-
-export function getDisabledGoogleThinkingConfig<T extends GoogleApiType>(
-  model: Model<T>,
-  config?: {
-    includeGemma4?: boolean;
-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
-  },
-): ThinkingConfig {
-  const mapThinkingLevel = (level: GoogleThinkingLevel): ThinkingConfig["thinkingLevel"] =>
-    config?.mapThinkingLevel
-      ? config.mapThinkingLevel(level)
-      : (level as ThinkingConfig["thinkingLevel"]);
-
-  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
-  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
-  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
-  if (isGemini3ProModel(model)) {
-    return { thinkingLevel: mapThinkingLevel("LOW") };
-  }
-  if (isGemini3FlashModel(model)) {
-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-  }
-  if (config?.includeGemma4 && isGemma4Model(model)) {
-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
-  }
-
-  // Gemini 2.x supports disabling via thinkingBudget = 0.
-  return { thinkingBudget: 0 };
-}
-
-export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
-  return /gemma-?4/.test(model.id.toLowerCase());
-}
-
-function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
-  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
-}
-
-function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
-  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
-}
-
-function getGoogleThinkingLevel<T extends GoogleApiType>(
-  effort: ClampedGoogleThinkingLevel,
-  model: Model<T>,
-  config?: { includeGemma4?: boolean },
-): GoogleThinkingLevel {
-  if (isGemini3ProModel(model)) {
-    switch (effort) {
-      case "minimal":
-      case "low":
-        return "LOW";
-      case "medium":
-      case "high":
-        return "HIGH";
-    }
-  }
-  if (config?.includeGemma4 && isGemma4Model(model)) {
-    switch (effort) {
-      case "minimal":
-      case "low":
-        return "MINIMAL";
-      case "medium":
-      case "high":
-        return "HIGH";
-    }
-  }
-  switch (effort) {
-    case "minimal":
-      return "MINIMAL";
-    case "low":
-      return "LOW";
-    case "medium":
-      return "MEDIUM";
-    case "high":
-      return "HIGH";
-  }
-  return "HIGH";
-}
-
-function getGoogleBudget<T extends GoogleApiType>(
-  model: Model<T>,
-  effort: ClampedGoogleThinkingLevel,
-  customBudgets?: ThinkingBudgets,
-  config?: { useFlashLiteBudgets?: boolean },
-): number {
-  if (customBudgets?.[effort] !== undefined) {
-    return customBudgets[effort];
-  }
-
-  if (model.id.includes("2.5-pro")) {
-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-      minimal: 128,
-      low: 2048,
-      medium: 8192,
-      high: 32768,
-    };
-    return budgets[effort];
-  }
-
-  if (config?.useFlashLiteBudgets && model.id.includes("2.5-flash-lite")) {
-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-      minimal: 512,
-      low: 2048,
-      medium: 8192,
-      high: 24576,
-    };
-    return budgets[effort];
-  }
-
-  if (model.id.includes("2.5-flash")) {
-    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
-      minimal: 128,
-      low: 2048,
-      medium: 8192,
-      high: 24576,
-    };
-    return budgets[effort];
-  }
-
-  return -1;
-}
-
-/**
- * Map Gemini FinishReason to our StopReason.
- */
-export function mapStopReason(reason: FinishReason): StopReason {
-  switch (reason) {
-    case FinishReason.STOP:
-      return "stop";
-    case FinishReason.MAX_TOKENS:
-      return "length";
-    case FinishReason.BLOCKLIST:
-    case FinishReason.PROHIBITED_CONTENT:
-    case FinishReason.SPII:
-    case FinishReason.SAFETY:
-    case FinishReason.IMAGE_SAFETY:
-    case FinishReason.IMAGE_PROHIBITED_CONTENT:
-    case FinishReason.IMAGE_RECITATION:
-    case FinishReason.IMAGE_OTHER:
-    case FinishReason.RECITATION:
-    case FinishReason.FINISH_REASON_UNSPECIFIED:
-    case FinishReason.OTHER:
-    case FinishReason.LANGUAGE:
-    case FinishReason.MALFORMED_FUNCTION_CALL:
-    case FinishReason.UNEXPECTED_TOOL_CALL:
-    case FinishReason.NO_IMAGE:
-      return "error";
-    default: {
-      const exhaustive: never = reason;
-      throw new Error(`Unhandled stop reason: ${String(exhaustive)}`);
-    }
-  }
-}
-
-export async function consumeGoogleGenerateContentStream<T extends GoogleApiType>(params: {
-  chunks: AsyncIterable<GenerateContentResponse>;
+export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
+  stream: AssistantMessageEventStream;
   model: Model<T>;
   output: AssistantMessage;
-  stream: AssistantMessageEventStream;
-  signal?: AbortSignal;
+  options?: Pick<StreamOptions, "signal" | "onPayload">;
+  createClient: () => GoogleGenerateContentClient;
+  buildParams: () => GenerateContentParameters;
   nextToolCallId: (name: string | undefined) => string;
 }): Promise<void> {
-  params.stream.push({ type: "start", partial: params.output });
-  let currentBlock: TextContent | ThinkingContent | null = null;
-  const blocks = params.output.content;
-  const toolCallIds = new Set<string>();
-  for (const block of blocks) {
-    if (block.type === "toolCall") {
-      toolCallIds.add(block.id);
-    }
-  }
-  const blockIndex = () => blocks.length - 1;
+  const { stream, model, output, options } = params;
 
-  const endCurrentBlock = () => {
-    if (!currentBlock) {
-      return;
-aihome@AIHome:~/actions
+  try {
+    const client = params.createClient();
+    let requestParams = params.buildParams();
+    const nextParams = await options?.onPayload?.(requestParams, model);
+    if (nextParams !== undefined) {
+      requestParams = nextParams as GenerateContentParameters;
+    }
+    const googleStream = await client.models.generateContentStream(requestParams);
+    await consumeGoogleGenerateContentStream({
+      chunks: googleStream,
+      model,
+      output,
+      stream,
+      signal: options?.signal,
+      nextToolCallId: params.nextToolCallId,
+    });
+  } catch (error) {
+    for (const block of output.content) {
+      if ("index" in block) {
+        delete (block as { index?: number }).index;
+      }
+    }
+    output.stopReason = options?.signal?.aborted ? "aborted" : "error";
+    output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    stream.push({ type: "error", reason: output.stopReason, error: output });
+    stream.end();
+  }
+}
+
+export function buildGoogleGenerateContentParams<T extends GoogleApiType>(
+  model: Model<T>,
+  context: Context,
+  options: GoogleProviderOptions = {},
+  configHooks?: {
+    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
+    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
+  },
+): GenerateContentParameters {
+  const contents = convertMessages(model, context);
+
+  const generationConfig: GenerateContentConfig = {};
+  if (options.temperature !== undefined) {
+    generationConfig.temperature = options.temperature;
+  }
+  if (options.maxTokens !== undefined) {
+    generationConfig.maxOutputTokens = options.maxTokens;
+  }
+  if (options.stop !== undefined && options.stop.length > 0) {
+    generationConfig.stopSequences = options.stop;
+  }
+
+  const config: GenerateContentConfig = {
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+grep -n -A80 -B20 "getEnvApiKey" \
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts \
+/app/node_modules/@openclaw/ai/src/env-api-keys.js 2>/dev/null
+'
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-201- *
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-202- * This only reports actual API key variables. It intentionally excludes ambient
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-203- * credential sources such as AWS profiles, AWS IAM credentials, and Google
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-204- * Application Default Credentials.
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-205- */
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-206-export function findEnvKeys(provider: string): string[] | undefined {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-207-  const envVars = getApiKeyEnvVars(provider);
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-208-  if (!envVars) {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-209-    return undefined;
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-210-  }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-211-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-212-  const found = envVars.filter((envVar) => Boolean(getEnvValue(envVar)));
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-213-  return found.length > 0 ? found : undefined;
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-214-}
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-215-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-216-/**
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-217- * Get API key for provider from known environment variables, e.g. OPENAI_API_KEY.
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-218- *
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-219- * Will not return API keys for providers that require OAuth tokens.
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-220- */
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts:221:export function getEnvApiKey(provider: string): string | undefined {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-222-  const envKeys = findEnvKeys(provider);
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-223-  if (envKeys?.[0]) {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-224-    return getEnvValue(envKeys[0]);
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-225-  }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-226-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-227-  // Vertex AI supports either an explicit API key or Application Default Credentials.
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-228-  // Auth is configured via `gcloud auth application-default login`.
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-229-  if (provider === "google-vertex") {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-230-    const hasCredentials = hasVertexAdcCredentials();
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-231-    const hasProject = Boolean(
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-232-      getEnvValue("GOOGLE_CLOUD_PROJECT") || getEnvValue("GCLOUD_PROJECT"),
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-233-    );
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-234-    const hasLocation = Boolean(getEnvValue("GOOGLE_CLOUD_LOCATION"));
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-235-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-236-    if (hasCredentials && hasProject && hasLocation) {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-237-      return "<authenticated>";
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-238-    }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-239-  }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-240-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-241-  if (provider === "amazon-bedrock") {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-242-    // Amazon Bedrock supports multiple credential sources:
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-243-    // 1. AWS_PROFILE - named profile from ~/.aws/credentials
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-244-    // 2. AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY - standard IAM keys
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-245-    // 3. AWS_BEARER_TOKEN_BEDROCK - Bedrock bearer token
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-246-    // 4. AWS_CONTAINER_CREDENTIALS_RELATIVE_URI - ECS task roles
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-247-    // 5. AWS_CONTAINER_CREDENTIALS_FULL_URI - ECS task roles (full URI)
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-248-    // 6. AWS_WEB_IDENTITY_TOKEN_FILE - IRSA (IAM Roles for Service Accounts)
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-249-    if (
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-250-      getEnvValue("AWS_PROFILE") ||
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-251-      (getEnvValue("AWS_ACCESS_KEY_ID") && getEnvValue("AWS_SECRET_ACCESS_KEY")) ||
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-252-      getEnvValue("AWS_BEARER_TOKEN_BEDROCK") ||
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-253-      getEnvValue("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI") ||
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-254-      getEnvValue("AWS_CONTAINER_CREDENTIALS_FULL_URI") ||
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-255-      getEnvValue("AWS_WEB_IDENTITY_TOKEN_FILE")
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-256-    ) {
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-257-      return "<authenticated>";
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-258-    }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-259-  }
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-260-
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-261-  return undefined;
+/app/node_modules/@openclaw/ai/src/env-api-keys.ts-262-}
