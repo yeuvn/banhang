@@ -1,6 +1,27 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "437,499p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
+sed -n "420,470p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
+echo "=== BUILD PARAMS ==="
+grep -n -A180 -B20 "function buildParams\|const buildParams\|buildGoogleGenerateContentParams" \
+  /app/node_modules/@openclaw/ai/src/providers/google.ts \
+  /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
 '
+    content: [],
+    api,
+    provider: model.provider,
+    model: model.id,
+    usage: {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      totalTokens: 0,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+    },
+    stopReason: "stop",
+    timestamp: Date.now(),
+  };
+}
+
 export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
   stream: AssistantMessageEventStream;
   model: Model<T>;
@@ -35,99 +56,307 @@ export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>
       }
     }
     output.stopReason = options?.signal?.aborted ? "aborted" : "error";
-    output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-    stream.push({ type: "error", reason: output.stopReason, error: output });
-    stream.end();
-  }
-}
-
-export function buildGoogleGenerateContentParams<T extends GoogleApiType>(
-  model: Model<T>,
-  context: Context,
-  options: GoogleProviderOptions = {},
-  configHooks?: {
-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
-    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
-  },
-): GenerateContentParameters {
-  const contents = convertMessages(model, context);
-
-  const generationConfig: GenerateContentConfig = {};
-  if (options.temperature !== undefined) {
-    generationConfig.temperature = options.temperature;
-  }
-  if (options.maxTokens !== undefined) {
-    generationConfig.maxOutputTokens = options.maxTokens;
-  }
-  if (options.stop !== undefined && options.stop.length > 0) {
-    generationConfig.stopSequences = options.stop;
-  }
-
-  const config: GenerateContentConfig = {
-aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -n -A80 -B20 "getEnvApiKey" \
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts \
-/app/node_modules/@openclaw/ai/src/env-api-keys.js 2>/dev/null
-'
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-201- *
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-202- * This only reports actual API key variables. It intentionally excludes ambient
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-203- * credential sources such as AWS profiles, AWS IAM credentials, and Google
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-204- * Application Default Credentials.
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-205- */
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-206-export function findEnvKeys(provider: string): string[] | undefined {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-207-  const envVars = getApiKeyEnvVars(provider);
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-208-  if (!envVars) {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-209-    return undefined;
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-210-  }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-211-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-212-  const found = envVars.filter((envVar) => Boolean(getEnvValue(envVar)));
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-213-  return found.length > 0 ? found : undefined;
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-214-}
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-215-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-216-/**
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-217- * Get API key for provider from known environment variables, e.g. OPENAI_API_KEY.
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-218- *
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-219- * Will not return API keys for providers that require OAuth tokens.
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-220- */
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts:221:export function getEnvApiKey(provider: string): string | undefined {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-222-  const envKeys = findEnvKeys(provider);
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-223-  if (envKeys?.[0]) {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-224-    return getEnvValue(envKeys[0]);
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-225-  }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-226-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-227-  // Vertex AI supports either an explicit API key or Application Default Credentials.
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-228-  // Auth is configured via `gcloud auth application-default login`.
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-229-  if (provider === "google-vertex") {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-230-    const hasCredentials = hasVertexAdcCredentials();
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-231-    const hasProject = Boolean(
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-232-      getEnvValue("GOOGLE_CLOUD_PROJECT") || getEnvValue("GCLOUD_PROJECT"),
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-233-    );
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-234-    const hasLocation = Boolean(getEnvValue("GOOGLE_CLOUD_LOCATION"));
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-235-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-236-    if (hasCredentials && hasProject && hasLocation) {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-237-      return "<authenticated>";
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-238-    }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-239-  }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-240-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-241-  if (provider === "amazon-bedrock") {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-242-    // Amazon Bedrock supports multiple credential sources:
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-243-    // 1. AWS_PROFILE - named profile from ~/.aws/credentials
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-244-    // 2. AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY - standard IAM keys
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-245-    // 3. AWS_BEARER_TOKEN_BEDROCK - Bedrock bearer token
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-246-    // 4. AWS_CONTAINER_CREDENTIALS_RELATIVE_URI - ECS task roles
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-247-    // 5. AWS_CONTAINER_CREDENTIALS_FULL_URI - ECS task roles (full URI)
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-248-    // 6. AWS_WEB_IDENTITY_TOKEN_FILE - IRSA (IAM Roles for Service Accounts)
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-249-    if (
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-250-      getEnvValue("AWS_PROFILE") ||
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-251-      (getEnvValue("AWS_ACCESS_KEY_ID") && getEnvValue("AWS_SECRET_ACCESS_KEY")) ||
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-252-      getEnvValue("AWS_BEARER_TOKEN_BEDROCK") ||
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-253-      getEnvValue("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI") ||
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-254-      getEnvValue("AWS_CONTAINER_CREDENTIALS_FULL_URI") ||
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-255-      getEnvValue("AWS_WEB_IDENTITY_TOKEN_FILE")
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-256-    ) {
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-257-      return "<authenticated>";
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-258-    }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-259-  }
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-260-
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-261-  return undefined;
-/app/node_modules/@openclaw/ai/src/env-api-keys.ts-262-}
+=== BUILD PARAMS ===
+/app/node_modules/@openclaw/ai/src/providers/google.ts-1-// Google provider adapts Gemini streams and tools to the agent runtime.
+/app/node_modules/@openclaw/ai/src/providers/google.ts-2-import { type GenerateContentParameters, GoogleGenAI } from "@google/genai";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-3-import { getEnvApiKey } from "../env-api-keys.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-4-import { getAiTransportHost, resolveAiTransportHeaderSentinels } from "../host.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-5-import type { Context, Model, SimpleStreamOptions, StreamFunction } from "../types.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-6-import { AssistantMessageEventStream } from "../utils/event-stream.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-7-import {
+/app/node_modules/@openclaw/ai/src/providers/google.ts:8:  buildGoogleGenerateContentParams,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-9-  buildGoogleSimpleThinking,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-10-  createGoogleAssistantOutput,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-11-  getDisabledGoogleThinkingConfig,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-12-  type GoogleProviderOptions,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-13-  runGoogleGenerateContentLifecycle,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-14-} from "./google-shared.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-15-import { buildBaseOptions } from "./simple-options.js";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-16-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-17-type GoogleOptions = GoogleProviderOptions;
+/app/node_modules/@openclaw/ai/src/providers/google.ts-18-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-19-// Counter for generating unique tool call IDs
+/app/node_modules/@openclaw/ai/src/providers/google.ts-20-let toolCallCounter = 0;
+/app/node_modules/@openclaw/ai/src/providers/google.ts-21-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-22-export const streamGoogle: StreamFunction<"google-generative-ai", GoogleOptions> = (
+/app/node_modules/@openclaw/ai/src/providers/google.ts-23-  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-24-  context: Context,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-25-  options?: GoogleOptions,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-26-) => {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-27-  const stream = new AssistantMessageEventStream();
+/app/node_modules/@openclaw/ai/src/providers/google.ts-28-  const output = createGoogleAssistantOutput(model, "google-generative-ai");
+/app/node_modules/@openclaw/ai/src/providers/google.ts-29-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-30-  void runGoogleGenerateContentLifecycle({
+/app/node_modules/@openclaw/ai/src/providers/google.ts-31-    stream,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-32-    model,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-33-    output,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-34-    options,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-35-    createClient: () => {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-36-      const apiKey = options?.apiKey || getEnvApiKey(model.provider) || "";
+/app/node_modules/@openclaw/ai/src/providers/google.ts-37-      return createClient(model, apiKey, options?.headers);
+/app/node_modules/@openclaw/ai/src/providers/google.ts-38-    },
+/app/node_modules/@openclaw/ai/src/providers/google.ts-39-    buildParams: () => buildParams(model, context, options),
+/app/node_modules/@openclaw/ai/src/providers/google.ts-40-    nextToolCallId: (name) => `${name}_${Date.now()}_${++toolCallCounter}`,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-41-  });
+/app/node_modules/@openclaw/ai/src/providers/google.ts-42-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-43-  return stream;
+/app/node_modules/@openclaw/ai/src/providers/google.ts-44-};
+/app/node_modules/@openclaw/ai/src/providers/google.ts-45-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-46-export const streamSimpleGoogle: StreamFunction<"google-generative-ai", SimpleStreamOptions> = (
+/app/node_modules/@openclaw/ai/src/providers/google.ts-47-  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-48-  context: Context,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-49-  options?: SimpleStreamOptions,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-50-) => {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-51-  const apiKey = options?.apiKey || getEnvApiKey(model.provider);
+/app/node_modules/@openclaw/ai/src/providers/google.ts-52-  if (!apiKey) {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-53-    throw new Error(`No API key for provider: ${model.provider}`);
+/app/node_modules/@openclaw/ai/src/providers/google.ts-54-  }
+/app/node_modules/@openclaw/ai/src/providers/google.ts-55-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-56-  const base = buildBaseOptions(model, options, apiKey);
+/app/node_modules/@openclaw/ai/src/providers/google.ts-57-  return streamGoogle(model, context, {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-58-    ...base,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-59-    thinking: buildGoogleSimpleThinking(model, options, {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-60-      includeGemma4ThinkingLevel: true,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-61-      useFlashLiteBudgets: true,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-62-    }),
+/app/node_modules/@openclaw/ai/src/providers/google.ts-63-  } satisfies GoogleOptions);
+/app/node_modules/@openclaw/ai/src/providers/google.ts-64-};
+/app/node_modules/@openclaw/ai/src/providers/google.ts-65-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-66-function createClient(
+/app/node_modules/@openclaw/ai/src/providers/google.ts-67-  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-68-  apiKey?: string,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-69-  optionsHeaders?: Record<string, string>,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-70-): GoogleGenAI {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-71-  const httpOptions: { baseUrl?: string; apiVersion?: string; headers?: Record<string, string> } =
+/app/node_modules/@openclaw/ai/src/providers/google.ts-72-    {};
+/app/node_modules/@openclaw/ai/src/providers/google.ts-73-  if (model.baseUrl) {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-74-    httpOptions.baseUrl = model.baseUrl;
+/app/node_modules/@openclaw/ai/src/providers/google.ts-75-    httpOptions.apiVersion = ""; // baseUrl already includes version path, don't append
+/app/node_modules/@openclaw/ai/src/providers/google.ts-76-  }
+/app/node_modules/@openclaw/ai/src/providers/google.ts-77-  if (model.headers || optionsHeaders) {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-78-    httpOptions.headers = resolveAiTransportHeaderSentinels({
+/app/node_modules/@openclaw/ai/src/providers/google.ts-79-      ...model.headers,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-80-      ...optionsHeaders,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-81-    });
+/app/node_modules/@openclaw/ai/src/providers/google.ts-82-  }
+/app/node_modules/@openclaw/ai/src/providers/google.ts-83-
+/app/node_modules/@openclaw/ai/src/providers/google.ts-84-  // @google/genai exposes RequestInit options but no custom fetch; unwrap at construction.
+/app/node_modules/@openclaw/ai/src/providers/google.ts-85-  const resolvedApiKey = apiKey ? getAiTransportHost().resolveSecretSentinel(apiKey) : undefined;
+/app/node_modules/@openclaw/ai/src/providers/google.ts-86-  return new GoogleGenAI({
+/app/node_modules/@openclaw/ai/src/providers/google.ts-87-    apiKey: resolvedApiKey,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-88-    httpOptions: Object.keys(httpOptions).length > 0 ? httpOptions : undefined,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-89-  });
+/app/node_modules/@openclaw/ai/src/providers/google.ts-90-}
+/app/node_modules/@openclaw/ai/src/providers/google.ts-91-
+/app/node_modules/@openclaw/ai/src/providers/google.ts:92:function buildParams(
+/app/node_modules/@openclaw/ai/src/providers/google.ts-93-  model: Model<"google-generative-ai">,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-94-  context: Context,
+/app/node_modules/@openclaw/ai/src/providers/google.ts-95-  options: GoogleOptions = {},
+/app/node_modules/@openclaw/ai/src/providers/google.ts-96-): GenerateContentParameters {
+/app/node_modules/@openclaw/ai/src/providers/google.ts:97:  return buildGoogleGenerateContentParams(model, context, options, {
+/app/node_modules/@openclaw/ai/src/providers/google.ts-98-    getDisabledThinkingConfig: (modelLocal) =>
+/app/node_modules/@openclaw/ai/src/providers/google.ts-99-      getDisabledGoogleThinkingConfig(modelLocal, { includeGemma4: true }),
+/app/node_modules/@openclaw/ai/src/providers/google.ts-100-  });
+/app/node_modules/@openclaw/ai/src/providers/google.ts-101-}
+--
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-457-      chunks: googleStream,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-458-      model,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-459-      output,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-460-      stream,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-461-      signal: options?.signal,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-462-      nextToolCallId: params.nextToolCallId,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-463-    });
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-464-  } catch (error) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-465-    for (const block of output.content) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-466-      if ("index" in block) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-467-        delete (block as { index?: number }).index;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-468-      }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-469-    }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-470-    output.stopReason = options?.signal?.aborted ? "aborted" : "error";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-471-    output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-472-    stream.push({ type: "error", reason: output.stopReason, error: output });
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-473-    stream.end();
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-474-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-475-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-476-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts:477:export function buildGoogleGenerateContentParams<T extends GoogleApiType>(
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-478-  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-479-  context: Context,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-480-  options: GoogleProviderOptions = {},
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-481-  configHooks?: {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-482-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-483-    getDisabledThinkingConfig?: (model: Model<T>) => ThinkingConfig;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-484-  },
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-485-): GenerateContentParameters {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-486-  const contents = convertMessages(model, context);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-487-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-488-  const generationConfig: GenerateContentConfig = {};
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-489-  if (options.temperature !== undefined) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-490-    generationConfig.temperature = options.temperature;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-491-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-492-  if (options.maxTokens !== undefined) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-493-    generationConfig.maxOutputTokens = options.maxTokens;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-494-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-495-  if (options.stop !== undefined && options.stop.length > 0) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-496-    generationConfig.stopSequences = options.stop;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-497-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-498-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-499-  const config: GenerateContentConfig = {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-500-    ...(Object.keys(generationConfig).length > 0 && generationConfig),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-501-    ...(context.systemPrompt && {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-502-      systemInstruction: sanitizeSurrogates(stripSystemPromptCacheBoundary(context.systemPrompt)),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-503-    }),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-504-    ...(context.tools && context.tools.length > 0 && { tools: convertTools(context.tools) }),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-505-  };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-506-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-507-  if (context.tools && context.tools.length > 0 && options.toolChoice) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-508-    config.toolConfig = {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-509-      functionCallingConfig: {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-510-        mode: mapToolChoice(options.toolChoice),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-511-      },
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-512-    };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-513-  } else {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-514-    config.toolConfig = undefined;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-515-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-516-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-517-  if (options.thinking?.enabled && model.reasoning) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-518-    const thinkingConfig: ThinkingConfig = { includeThoughts: true };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-519-    if (options.thinking.level !== undefined) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-520-      thinkingConfig.thinkingLevel = configHooks?.mapThinkingLevel
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-521-        ? configHooks.mapThinkingLevel(options.thinking.level)
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-522-        : (options.thinking.level as ThinkingConfig["thinkingLevel"]);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-523-    } else if (options.thinking.budgetTokens !== undefined) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-524-      thinkingConfig.thinkingBudget = options.thinking.budgetTokens;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-525-    }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-526-    config.thinkingConfig = thinkingConfig;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-527-  } else if (model.reasoning && options.thinking && !options.thinking.enabled) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-528-    config.thinkingConfig = configHooks?.getDisabledThinkingConfig
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-529-      ? configHooks.getDisabledThinkingConfig(model)
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-530-      : getDisabledGoogleThinkingConfig(model);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-531-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-532-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-533-  if (options.signal) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-534-    if (options.signal.aborted) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-535-      throw new Error("Request aborted");
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-536-    }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-537-    config.abortSignal = options.signal;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-538-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-539-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-540-  return {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-541-    model: model.id,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-542-    contents,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-543-    config,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-544-  };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-545-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-546-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-547-export function buildGoogleSimpleThinking<T extends GoogleApiType>(
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-548-  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-549-  options: SimpleStreamOptions | undefined,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-550-  config?: {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-551-    includeGemma4ThinkingLevel?: boolean;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-552-    useFlashLiteBudgets?: boolean;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-553-  },
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-554-): GoogleThinkingOptions {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-555-  if (!options?.reasoning || options.reasoning === "off") {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-556-    return { enabled: false };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-557-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-558-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-559-  const clampedReasoning = clampThinkingLevel(model, options.reasoning);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-560-  const effort = (
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-561-    clampedReasoning === "off" || clampedReasoning === "max" ? "high" : clampedReasoning
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-562-  ) as ClampedGoogleThinkingLevel;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-563-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-564-  if (
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-565-    isGemini3ProModel(model) ||
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-566-    isGemini3FlashModel(model) ||
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-567-    (config?.includeGemma4ThinkingLevel && isGemma4Model(model))
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-568-  ) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-569-    return {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-570-      enabled: true,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-571-      level: getGoogleThinkingLevel(effort, model, {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-572-        includeGemma4: config?.includeGemma4ThinkingLevel,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-573-      }),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-574-    };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-575-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-576-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-577-  return {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-578-    enabled: true,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-579-    budgetTokens: getGoogleBudget(model, effort, options.thinkingBudgets, {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-580-      useFlashLiteBudgets: config?.useFlashLiteBudgets,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-581-    }),
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-582-  };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-583-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-584-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-585-export function getDisabledGoogleThinkingConfig<T extends GoogleApiType>(
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-586-  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-587-  config?: {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-588-    includeGemma4?: boolean;
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-589-    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-590-  },
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-591-): ThinkingConfig {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-592-  const mapThinkingLevel = (level: GoogleThinkingLevel): ThinkingConfig["thinkingLevel"] =>
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-593-    config?.mapThinkingLevel
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-594-      ? config.mapThinkingLevel(level)
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-595-      : (level as ThinkingConfig["thinkingLevel"]);
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-596-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-597-  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-598-  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-599-  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-600-  if (isGemini3ProModel(model)) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-601-    return { thinkingLevel: mapThinkingLevel("LOW") };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-602-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-603-  if (isGemini3FlashModel(model)) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-604-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-605-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-606-  if (config?.includeGemma4 && isGemma4Model(model)) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-607-    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-608-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-609-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-610-  // Gemini 2.x supports disabling via thinkingBudget = 0.
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-611-  return { thinkingBudget: 0 };
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-612-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-613-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-614-export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-615-  return /gemma-?4/.test(model.id.toLowerCase());
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-616-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-617-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-618-function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-619-  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-620-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-621-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-622-function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-623-  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-624-}
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-625-
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-626-function getGoogleThinkingLevel<T extends GoogleApiType>(
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-627-  effort: ClampedGoogleThinkingLevel,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-628-  model: Model<T>,
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-629-  config?: { includeGemma4?: boolean },
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-630-): GoogleThinkingLevel {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-631-  if (isGemini3ProModel(model)) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-632-    switch (effort) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-633-      case "minimal":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-634-      case "low":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-635-        return "LOW";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-636-      case "medium":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-637-      case "high":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-638-        return "HIGH";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-639-    }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-640-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-641-  if (config?.includeGemma4 && isGemma4Model(model)) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-642-    switch (effort) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-643-      case "minimal":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-644-      case "low":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-645-        return "MINIMAL";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-646-      case "medium":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-647-      case "high":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-648-        return "HIGH";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-649-    }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-650-  }
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-651-  switch (effort) {
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-652-    case "minimal":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-653-      return "MINIMAL";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-654-    case "low":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-655-      return "LOW";
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-656-    case "medium":
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts-657-      return "MEDIUM";
