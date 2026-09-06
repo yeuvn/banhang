@@ -1,53 +1,102 @@
 aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-echo "=== OPENCLAW STATUS ==="
-node openclaw.mjs gateway status 2>&1 || true
-
-echo
-echo "=== RECENT LOG ==="
-tail -n 80 /tmp/openclaw/openclaw-$(date +%Y-%m-%d).log 2>/dev/null || true
+node openclaw.mjs --help 2>&1 | head -n 100
 '
-=== OPENCLAW STATUS ===
-Service: systemd user (disabled)
-File logs: /tmp/openclaw/openclaw-2026-09-06.log
 
-Config (cli): /data/config/openclaw.json5
-Config (service): /data/config/openclaw.json5
+OpenClaw 2026.7.1 (unknown) — All your chats, one OpenClaw.
 
-Gateway: bind=loopback (127.0.0.1), port=18789 (env/config)
-Probe target: ws://127.0.0.1:18789
-Dashboard: http://127.0.0.1:18789/
-Probe note: Loopback-only gateway; only local clients can connect.
+Usage: openclaw [options] [command]
 
-Runtime: unknown (systemctl not available; systemd user services are required on Linux.)
-Connectivity probe: failed
-Probe target: ws://127.0.0.1:18789
-  device identity required
-Capability: unknown
+Options:
+  --container <name>   Run the CLI inside a running Podman/Docker container
+                       named <name> (default: env OPENCLAW_CONTAINER)
+  --dev                Dev profile: isolate state under ~/.openclaw-dev, default
+                       gateway port 19001, and shift derived ports
+                       (browser/canvas)
+  -h, --help           Display help for command
+  --log-level <level>  Global log level override for file + console
+                       (silent|fatal|error|warn|info|debug|trace)
+  --no-color           Disable ANSI colors
+  --profile <name>     Use a named profile (isolates
+                       OPENCLAW_STATE_DIR/OPENCLAW_CONFIG_PATH under
+                       ~/.openclaw-<name>)
+  -V, --version        output the version number
 
-systemd user services unavailable.
-systemd user services are unavailable; install/enable systemd or run the gateway under your supervisor.
-If you're in a container, run the gateway in the foreground instead of `openclaw gateway`.
+Commands:
+  Hint: commands suffixed with * have subcommands. Run <command> --help for details.
+  acp *                Run an ACP bridge backed by the Gateway
+  agent                Run an agent turn via the Gateway (use --local for
+                       embedded)
+  agents *             Manage isolated agents (workspaces + auth + routing)
+  approvals *          Manage exec approvals (gateway or node host)
+  attach               Attach Claude Code to a gateway session with scoped MCP
+                       tools
+  audit                Inspect metadata-only agent run and tool action records
+  backup *             Create and verify local backup archives for OpenClaw
+                       state
+  capability *         Run provider capability commands (fallback alias: infer)
+  channels *           Manage connected chat channels and accounts
+  chat                 Open a local terminal UI (alias for tui --local)
+  clawbot *            Legacy clawbot command aliases
+  commitments *        List and manage inferred follow-up commitments
+  completion           Generate shell completion script
+  config *             Non-interactive config helpers
+                       (get/set/patch/unset/file/schema/validate). Run without
+                       subcommand for guided setup.
+  configure            Interactive configuration for credentials, channels,
+                       gateway, and agent defaults
+  crestodian           Open the ring-zero setup and repair helper
+  cron *               Manage cron jobs (via Gateway)
+  daemon *             Manage the Gateway service (launchd/systemd/schtasks)
+  dashboard            Open the Control UI with your current token
+  devices *            Device pairing and auth tokens
+  directory *          Lookup contact and group IDs (self, peers, groups) for
+                       supported chat channels
+  dns *                DNS helpers for wide-area discovery (Tailscale + CoreDNS)
+  docs                 Search the live OpenClaw docs
+  doctor               Health checks + quick fixes for the gateway and channels
+  exec-approvals *     Manage exec approvals (alias for approvals)
+  exec-policy *        Show or synchronize requested exec policy with host
+                       approvals
+  gateway *            Run, inspect, and query the WebSocket Gateway
+  health               Fetch health from the running gateway
+  help                 Display help for command
+  hooks *              Manage internal agent hooks
+  infer *              Run provider-backed inference commands through a stable
+                       CLI surface
+  logs                 Tail gateway file logs via RPC
+  mcp *                Manage OpenClaw mcp.servers config and channel bridge
+  memory *             Search, inspect, and reindex memory files
+  message *            Send, read, and manage messages and channel actions
+  migrate *            Import state from another agent system
+  models *             Model discovery, scanning, and configuration
+  node *               Run and manage the headless node host service
+  nodes *              Manage gateway-owned nodes (pairing, status, invoke, and
+                       media)
+  onboard              Guided setup for auth, models, Gateway, workspace,
+                       channels, and skills
+  pairing *            Secure DM pairing (approve inbound requests)
+  plugins *            Manage OpenClaw plugins and extensions
+  promos *             Discover and claim promotional model offers from ClawHub
+  proxy *              Run the OpenClaw debug proxy and inspect captured traffic
+  qr                   Generate a mobile pairing QR code and setup code
+  reset                Reset local config/state (keeps the CLI installed)
+  sandbox *            Manage sandbox containers (Docker-based agent isolation)
+  secrets *            Secrets runtime controls
+  security *           Audit local config and state for common security
+                       foot-guns
+  sessions *           List stored conversation sessions
+  setup                Alias for openclaw onboard
+  skills *             List and inspect available skills
+  status               Show channel health and recent session recipients
+  system *             System tools (events, heartbeat, presence)
+  tasks *              Inspect durable background tasks and TaskFlow state
+  terminal             Open a local terminal UI (alias for tui --local)
+  transcripts *        Inspect stored transcripts
+  tui                  Open a terminal UI connected to the Gateway
+  uninstall            Uninstall the gateway service + local data (CLI remains)
+  update *             Update OpenClaw and inspect update channel status
+  webhooks *           Webhook helpers and integrations
+  worktrees *          Create, inspect, restore, and clean up managed worktrees
 
-Port 18789 is already in use.
-- pid 8 node: openclaw-gateway (127.0.0.1:18789)
-- pid 8 node: openclaw-gateway ([::1]:18789)
-Listening: 127.0.0.1:18789, [::1]:18789
-Troubles: run openclaw status
-Troubleshooting: https://docs.openclaw.ai/troubleshooting
-
-=== RECENT LOG ===
-{"0":"{\"subsystem\":\"gateway\"}","1":"loading configuration…","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:06.765Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:06.769+07:00","hostname":"35c727c3cc41","message":"loading configuration…"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"resolving authentication…","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:06.923Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:06.924+07:00","hostname":"35c727c3cc41","message":"resolving authentication…"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"starting...","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:06.956Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:06.956+07:00","hostname":"35c727c3cc41","message":"starting..."}
-{"0":"{\"subsystem\":\"gateway\"}","1":"Gateway auth token was missing. Generated a runtime token for this startup without changing config; restart will generate a different token. Persist one with `openclaw config set gateway.auth.mode token` and `openclaw config set gateway.auth.token <token>`.","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:07.654Z","logLevelId":4,"logLevelName":"WARN","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:07.655+07:00","hostname":"35c727c3cc41","message":"Gateway auth token was missing. Generated a runtime token for this startup without changing config; restart will generate a different token. Persist one with `openclaw config set gateway.auth.mode token` and `openclaw config set gateway.auth.token <token>`."}
-{"0":"{\"subsystem\":\"gateway\"}","1":"starting HTTP server...","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:08.179Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:08.180+07:00","hostname":"35c727c3cc41","message":"starting HTTP server..."}
-{"0":"{\"subsystem\":\"gateway/health-monitor\"}","1":"started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway/health-monitor\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:08.367Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:08.367+07:00","hostname":"35c727c3cc41","message":"started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"agent model: google/gemini-3.6-flash (thinking=medium, fast=off)","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.139Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:09.140+07:00","hostname":"35c727c3cc41","message":"agent model: google/gemini-3.6-flash (thinking=medium, fast=off)"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"http server listening (1 plugin: google; 1.7s)","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.143Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:09.144+07:00","hostname":"35c727c3cc41","message":"http server listening (1 plugin: google; 1.7s)"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"log file: /tmp/openclaw/openclaw-2026-09-06.log","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.157Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:09.158+07:00","hostname":"35c727c3cc41","message":"log file: /tmp/openclaw/openclaw-2026-09-06.log"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"starting channels and sidecars...","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.364Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:09.364+07:00","hostname":"35c727c3cc41","message":"starting channels and sidecars..."}
-{"0":"{\"subsystem\":\"gateway\"}","1":"gateway ready","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.416Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:09.416+07:00","hostname":"35c727c3cc41","message":"gateway ready"}
-{"0":"{\"subsystem\":\"gateway/heartbeat\"}","1":{"intervalMs":1800000},"2":"heartbeat: started","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway/heartbeat\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:09.456Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:179:51","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:179","fileColumn":"51","fileLine":"179","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:179","method":"logToFile"}},"time":"2026-09-06T13:02:09.456+07:00","hostname":"35c727c3cc41","message":"heartbeat: started"}
-{"0":"{\"module\":\"cron\",\"storePath\":\"/data/state/cron/jobs.json\"}","1":{"enabled":false},"2":"cron: disabled","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"module\":\"cron\",\"storePath\":\"/data/state/cron/jobs.json\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:10.618Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/server-cron-Cwg2hJro.js:2581:18","fileName":"server-cron-Cwg2hJro.js","fileNameWithLine":"server-cron-Cwg2hJro.js:2581","fileColumn":"18","fileLine":"2581","filePath":"dist/server-cron-Cwg2hJro.js","filePathWithLine":"dist/server-cron-Cwg2hJro.js:2581","method":"start"}},"time":"2026-09-06T13:02:10.619+07:00","hostname":"35c727c3cc41","message":"cron: disabled"}
-{"0":"{\"subsystem\":\"gateway\"}","1":"agent runtime plugins pre-warmed in 184ms","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway\"}","parentNames":["openclaw"],"date":"2026-09-06T06:02:19.598Z","logLevelId":3,"logLevelName":"INFO","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:180:14","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:180","fileColumn":"14","fileLine":"180","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:180","method":"logToFile"}},"time":"2026-09-06T13:02:19.598+07:00","hostname":"35c727c3cc41","message":"agent runtime plugins pre-warmed in 184ms"}
-{"0":"{\"subsystem\":\"gateway/ws\"}","1":{"cause":"device-required","handshake":"failed","phase":"ws_upgrade_started","durationMs":88,"lastFrameType":"req","lastFrameMethod":"connect","lastFrameId":"5562ba6b-e42e-4bbc-8373-e5da01d90e98","host":"127.0.0.1:18789","remoteAddr":"127.0.0.1","remotePort":45450,"localAddr":"127.0.0.1","localPort":18789,"endpoint":"127.0.0.1:45450->127.0.0.1:18789","client":"cli","mode":"probe","version":"dev","platform":"linux","instanceId":"04faeadb-d38d-4635-b953-935c0d24e479"},"2":"closed before connect conn=907af343-ca59-433c-a01b-f1ce79887285 peer=127.0.0.1:45450->127.0.0.1:18789 remote=127.0.0.1 fwd=n/a origin=n/a host=127.0.0.1:18789 ua=n/a code=1008 reason=device identity required phase=ws_upgrade_started","_meta":{"runtime":"node","runtimeVersion":"24.16.0","hostname":"35c727c3cc41","name":"{\"subsystem\":\"gateway/ws\"}","parentNames":["openclaw"],"date":"2026-09-06T06:05:09.274Z","logLevelId":4,"logLevelName":"WARN","path":{"fullFilePath":"file:///app/dist/subsystem-C3fiUGN1.js:179:51","fileName":"subsystem-C3fiUGN1.js","fileNameWithLine":"subsystem-C3fiUGN1.js:179","fileColumn":"51","fileLine":"179","filePath":"dist/subsystem-C3fiUGN1.js","filePathWithLine":"dist/subsystem-C3fiUGN1.js:179","method":"logToFile"}},"time":"2026-09-06T13:05:09.275+07:00","hostname":"35c727c3cc41","message":"closed before connect conn=907af343-ca59-433c-a01b-f1ce79887285 peer=127.0.0.1:45450->127.0.0.1:18789 remote=127.0.0.1 fwd=n/a origin=n/a host=127.0.0.1:18789 ua=n/a code=1008 reason=device identity required phase=ws_upgrade_started"}
+Examples:
+  openclaw onboard
