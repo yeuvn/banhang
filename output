@@ -1,106 +1,29 @@
-name: AIHome OpenClaw TEST Box
-
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: openclaw-test-box
-  cancel-in-progress: true
-
-jobs:
-  deploy-test-box:
-    name: Deploy OpenClaw TEST on Box
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - aihome-box-test
-    timeout-minutes: 15
-    env:
-      EXPECTED_BRANCH: Openclaw-Test
-      SOURCE_DIR: /opt/aihome-test/source
-
-    steps:
-      - name: Checkout Openclaw-Test
-        uses: actions/checkout@v4
-        with:
-          ref: Openclaw-Test
-          clean: true
-
-      - name: Verify runner and source
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "${GITHUB_REF_NAME}" = "${EXPECTED_BRANCH}"
-          test -d "${SOURCE_DIR}"
-          test -f compose/openclaw.yml
-          test -f config/openclaw/openclaw.json5
-          echo "RUNNER=$(hostname)"
-          echo "COMMIT=$(git rev-parse HEAD)"
-
-      - name: Sync Openclaw-Test to TEST source
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -a --delete \
-            --exclude='.git/' \
-            ./ "${SOURCE_DIR}/"
-
-      - name: Validate pinned runtime configuration
-        working-directory: /opt/aihome-test/source
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker compose -f compose/openclaw.yml config >/tmp/aihome-openclaw-compose-test.yml
-          grep -Fq 'mem_limit: 4g' /tmp/aihome-openclaw-compose-test.yml
-          grep -Fq 'memswap_limit: 8g' /tmp/aihome-openclaw-compose-test.yml
-          grep -Fq 'cpus: 1.50' /tmp/aihome-openclaw-compose-test.yml
-          grep -Fq 'pids_limit: 256' /tmp/aihome-openclaw-compose-test.yml
-
-      - name: Restart OpenClaw TEST
-        working-directory: /opt/aihome-test/source
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker compose -f compose/openclaw.yml up -d --force-recreate
-
-      - name: Runtime health check
-        working-directory: /opt/aihome-test/source
-        shell: bash
-        run: |
-          set -euo pipefail
-          for i in $(seq 1 12); do
-            if docker inspect --format '{{.State.Status}}' aihome-openclaw-test 2>/dev/null | grep -Fxq running; then
-              docker compose -f compose/openclaw.yml ps
-              echo 'RUNTIME_HEALTH=PASS'
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f compose/openclaw.yml ps -a
-          echo 'RUNTIME_HEALTH=FAIL'
-          exit 1
-
-      - name: Failure diagnostics
-        if: failure()
-        working-directory: /opt/aihome-test/source
-        shell: bash
-        run: |
-          set +e
-          echo '=== docker compose ps -a ==='
-          docker compose -f compose/openclaw.yml ps -a
-          echo '=== container state ==='
-          docker inspect aihome-openclaw-test --format '{{json .State}}'
-          echo '=== container logs (last 300 lines) ==='
-          docker logs --tail 300 aihome-openclaw-test
-
-      - name: Result
-        if: always()
-        shell: bash
-        run: |
-          echo "AIHOME_BOX_RESULT=See job conclusion"
-          echo "COMMIT=${GITHUB_SHA}"
-          echo "RUNNER=$(hostname)"
+aihome@AIHome:~/actions-runner$ docker inspect aihome-openclaw-test --format 'Status={{.State.Status}} Memory={{.HostConfig.Memory}} Swap={{.HostConfig.MemorySwap}} CPU={{.HostConfig.NanoCpus}} Pids={{.HostConfig.PidsLimit}}'
+Status=running Memory=4294967296 Swap=8589934592 CPU=1500000000 Pids=256
+aihome@AIHome:~/actions-runner$ docker logs --tail 100 aihome-openclaw-test
+2026-09-06T10:22:17.435+07:00 [gateway] loading configuration…
+2026-09-06T10:22:17.538+07:00 [gateway] resolving authentication…
+2026-09-06T10:22:17.570+07:00 [gateway] starting...
+2026-09-06T10:22:18.206+07:00 [gateway] auth token was missing. Generated a runtime token for this startup without changing config; restart will generate a different token. Persist one with `openclaw config set gateway.auth.mode token` and `openclaw config set gateway.auth.token <token>`.
+2026-09-06T10:22:18.792+07:00 [gateway] starting HTTP server...
+2026-09-06T10:22:19.017+07:00 [health-monitor] started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)
+2026-09-06T10:22:19.938+07:00 [gateway] agent model: google/gemini-3.6-flash (thinking=medium, fast=off)
+2026-09-06T10:22:19.944+07:00 [gateway] http server listening (1 plugin: google; 1.9s)
+2026-09-06T10:22:19.953+07:00 [gateway] log file: /tmp/openclaw/openclaw-2026-09-06.log
+2026-09-06T10:22:20.096+07:00 [gateway] starting channels and sidecars...
+2026-09-06T10:22:20.141+07:00 [gateway] ready
+2026-09-06T10:22:20.200+07:00 [heartbeat] started
+2026-09-06T10:22:30.321+07:00 [gateway] agent runtime plugins pre-warmed in 181ms
+2026-09-06T10:28:04.133+07:00 [ws] closed before connect conn=fe733288-1c07-4d90-b548-8eca3ea4c080 peer=127.0.0.1:43258->127.0.0.1:18789 remote=127.0.0.1 fwd=n/a origin=n/a host=127.0.0.1:18789 ua=n/a code=1008 reason=connect failed phase=ws_upgrade_started
+2026-09-06T10:45:34.558+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
+2026-09-06T11:15:34.144+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
+2026-09-06T11:45:34.139+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
+2026-09-06T12:15:34.137+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
+aihome@AIHome:~/actions-runner$ cd /opt/aihome-test/source
+git rev-parse --short HEAD
+git branch --show-current
+e831f70
+Openclaw-Test
+aihome@AIHome:/opt/aihome-test/source$ docker compose -f compose/openclaw.yml ps
+NAME                   IMAGE                                                                                                               COMMAND                  SERVICE    CREATED       STATUS                 PORTS
+aihome-openclaw-test   ghcr.io/openclaw/openclaw:2026.7.1-2-slim@sha256:8789721d2e9b24b780a1504b56deb4c6bd5c7dbf96a1dd117e7c45c2ed72c8ac   "tini -s -- sh -lc '…"   openclaw   2 hours ago   Up 2 hours (healthy)   127.0.0.1:18789->18789/tcp
