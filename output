@@ -46,7 +46,7 @@ Options:
         "provider": "google",
         "effective": {
           "kind": "env",
-          "detail": "AQ.Ab8RN...mgze6WVw"
+          "detail": "AQ.A***WVw"
         },
         "profiles": {
           "count": 0,
@@ -56,7 +56,7 @@ Options:
           "labels": []
         },
         "env": {
-          "value": "AQ.Ab8RN...mgze6WVw",
+          "value": "AQ.Ab***WVw",
           "source": "env: GEMINI_API_KEY"
         }
       }
