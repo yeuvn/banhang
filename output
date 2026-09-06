@@ -1,91 +1,74 @@
-aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-set +e
-
-echo "=================================================="
-echo "TEST 1: GEMINI 3.6 FLASH VIA GATEWAY"
-echo "=================================================="
-
-node openclaw.mjs infer model run \
-  --gateway \
-  --model google/gemini-3.6-flash \
-  --thinking medium \
-  --prompt "Reply with exactly: AIHOME_GEMINI_36_OK" \
-  --json 2>&1
+aihome@AIHome:~$ docker exec aihome-openclaw-test sh -lc '
+echo "=== BOOTSTRAP HELP ==="
+openclaw --help | grep -i -A3 -B3 "workspace" || true
 
 echo
-echo "=================================================="
-echo "TEST 2: GATEWAY HEALTH WITH VERBOSE"
-echo "=================================================="
-
-node openclaw.mjs health --verbose --json 2>&1
+echo "=== WORKSPACE COMMANDS ==="
+openclaw gateway --help | grep -i -A3 -B3 "workspace" || true
 
 echo
-echo "=================================================="
-echo "TEST 3: GATEWAY STATUS"
-echo "=================================================="
-
-node openclaw.mjs gateway status 2>&1
+echo "=== ATTESTATION ==="
+cat /data/state/workspace-attestations/*.attested
 
 echo
-echo "=================================================="
-echo "TEST 4: RECENT OPENCLAW LOG"
-echo "=================================================="
-
-docker logs --since 5m aihome-openclaw-test 2>&1 | tail -n 200
+echo "=== WORKSPACE ==="
+ls -la /home/node/.openclaw/workspace
 '
-==================================================
-TEST 1: GEMINI 3.6 FLASH VIA GATEWAY
-==================================================
-GatewayCredentialsRequiredError: gateway agent requires credentials before opening a websocket
-Fix: configure gateway.auth token/password, pair this device, or pass --token/--password.
-Config: /data/config/openclaw.json5
+=== BOOTSTRAP HELP ===
+  acp *                Run an ACP bridge backed by the Gateway
+  agent                Run an agent turn via the Gateway (use --local for
+                       embedded)
+  agents *             Manage isolated agents (workspaces + auth + routing)
+  approvals *          Manage exec approvals (gateway or node host)
+  attach               Attach Claude Code to a gateway session with scoped MCP
+                       tools
+--
+  node *               Run and manage the headless node host service
+  nodes *              Manage gateway-owned nodes (pairing, status, invoke, and
+                       media)
+  onboard              Guided setup for auth, models, Gateway, workspace,
+                       channels, and skills
+  pairing *            Secure DM pairing (approve inbound requests)
+  plugins *            Manage OpenClaw plugins and extensions
+--
 
-==================================================
-TEST 2: GATEWAY HEALTH WITH VERBOSE
-==================================================
-{
-  "ok": false,
-  "error": {
-    "type": "gateway_credentials_required",
-    "message": "Gateway is reachable, but this CLI has no token/password or paired device token for read-scope health RPCs."
-  },
-  "gateway": {
-    "reachable": true
-  }
-}
+Examples:
+  openclaw onboard
+    Run guided setup for a local Gateway, workspace, auth, and channels.
+  openclaw setup
+    Create the baseline config, workspace, and session folders.
+  openclaw configure
+    Change models, Gateway, channels, plugins, skills, and health checks.
+  openclaw status
 
-==================================================
-TEST 3: GATEWAY STATUS
-==================================================
-Service: systemd user (disabled)
-File logs: /tmp/openclaw/openclaw-2026-09-06.log
+=== WORKSPACE COMMANDS ===
+  --cli-backend-logs         Only show CLI backend logs in the console (includes
+                             stdout/stderr) (default: false)
+  --compact                  Alias for "--ws-log compact" (default: false)
+  --dev                      Create a dev config + workspace if missing (no
+                             BOOTSTRAP.md) (default: false)
+  --force                    Kill any existing listener on the target port
+                             before starting (default: false)
+--
+                             false)
+  --raw-stream-path <path>   Raw stream jsonl path
+  --reset                    Reset dev config + credentials + sessions +
+                             workspace (requires --dev) (default: false)
+  --tailscale <mode>         Tailscale exposure mode ("off"|"serve"|"funnel")
+  --tailscale-reset-on-exit  Reset Tailscale serve/funnel configuration on
+                             shutdown (default: false)
 
-Config (cli): /data/config/openclaw.json5
-Config (service): /data/config/openclaw.json5
+=== ATTESTATION ===
+openclaw-workspace-attestation:v1
+2026-09-05T09:15:34.662Z
+generated:AGENTS.md:c9a664b73200ae5d6b0da0908de3256cdb4dda8ba6fe99f5e6c5115c3983604c
+generated:HEARTBEAT.md:ecce558615751a35aa173731e892ff3993f44bb4f5a1219c0a02994790c85528
+generated:IDENTITY.md:2f6da67d69bd362f7aaa13c1214dcbba9f0f7cb51ff42ec5313e24d6bf6f9e55
+generated:SOUL.md:29c66a31acce424ed6cf9b1c9e77dcdc5ae79d5fe2a035765c302a34b9025e0e
+generated:TOOLS.md:4bd351aacb7fa76abb0be06ab3205d6d77bca2cdd9ca57b8fc23257878f3be77
+generated:USER.md:e418ca9a680553b3ad8f54aecb0d403330810bb77826ab5251cc1dc13368fe16
 
-Gateway: bind=loopback (127.0.0.1), port=18789 (env/config)
-Probe target: ws://127.0.0.1:18789
-Dashboard: http://127.0.0.1:18789/
-Probe note: Loopback-only gateway; only local clients can connect.
-
-Runtime: unknown (systemctl not available; systemd user services are required on Linux.)
-Connectivity probe: failed
-Probe target: ws://127.0.0.1:18789
-  device identity required
-Capability: unknown
-
-systemd user services unavailable.
-systemd user services are unavailable; install/enable systemd or run the gateway under your supervisor.
-If you're in a container, run the gateway in the foreground instead of `openclaw gateway`.
-
-Port 18789 is already in use.
-- pid 9 node: openclaw-gateway (127.0.0.1:18789)
-- pid 9 node: openclaw-gateway ([::1]:18789)
-Listening: 127.0.0.1:18789, [::1]:18789
-Troubles: run openclaw status
-Troubleshooting: https://docs.openclaw.ai/troubleshooting
-
-==================================================
-TEST 4: RECENT OPENCLAW LOG
-==================================================
-sh: 34: docker: not found
+=== WORKSPACE ===
+total 8
+drwxrwxr-x 2 node node 4096 Sep  5 15:25 .
+drwx------ 3 node node 4096 Aug  4 07:45 ..
