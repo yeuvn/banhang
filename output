@@ -1,10 +1,94 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1325,1425p" /app/dist/model-wpoKGSDF.js
+grep -n -A80 -B10 "function resolveModelWithRegistry" /app/dist/model-wpoKGSDF.js
 '
-		const id = entry.id;
-		return typeof id === "string" && id === params.modelId;
-	})) return;
-	return `Found agents.defaults.models["${agentModelKey}"], but no matching models.providers["${params.provider}"].models[] entry. Add { "id": "${params.modelId}", "name": "${params.modelId}" } to models.providers["${params.provider}"].models[] to register this provider model. For custom or proxy providers, also set api and baseUrl so requests route to the intended endpoint. See https://docs.openclaw.ai/concepts/model-providers.`;
-}
-//#endregion
-export { resolveModelAsync as n, resolveModelWithRegistry as r, resolveModel as t };
+1003-	const provider = canonicalizeManifestModelCatalogProviderAlias({
+1004-		provider: params.provider,
+1005-		cfg: params.cfg,
+1006-		workspaceDir: params.workspaceDir
+1007-	});
+1008-	return {
+1009-		provider,
+1010-		model: normalizeStaticProviderModelId(normalizeProviderId(provider), params.modelId)
+1011-	};
+1012-}
+1013:function resolveModelWithRegistry(params) {
+1014-	const workspaceDir = params.workspaceDir ?? params.cfg?.agents?.defaults?.workspace;
+1015-	const normalizedRef = normalizeProviderModelRef({
+1016-		...params,
+1017-		workspaceDir
+1018-	});
+1019-	const normalizedParams = {
+1020-		...params,
+1021-		provider: normalizedRef.provider,
+1022-		modelId: normalizedRef.model
+1023-	};
+1024-	const runtimeHooks = params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS;
+1025-	const scopedParams = {
+1026-		...normalizedParams,
+1027-		...workspaceDir !== void 0 ? { workspaceDir } : {}
+1028-	};
+1029-	const explicitModel = resolveExplicitModelWithRegistry(scopedParams);
+1030-	if (explicitModel?.kind === "suppressed") return resolveRuntimePreferredSuppressedModel(scopedParams);
+1031-	if (explicitModel?.kind === "resolved") {
+1032-		if (!shouldCompareProviderRuntimeResolvedModel({
+1033-			provider: scopedParams.provider,
+1034-			modelId: scopedParams.modelId,
+1035-			cfg: scopedParams.cfg,
+1036-			agentDir: scopedParams.agentDir,
+1037-			workspaceDir,
+1038-			runtimeHooks
+1039-		})) return explicitModel.model;
+1040-		return resolvePluginDynamicModelWithRegistry(scopedParams) ?? (shouldDropRuntimePreferredExplicitMiss({
+1041-			provider: scopedParams.provider,
+1042-			modelId: scopedParams.modelId,
+1043-			explicitModel
+1044-		}) ? void 0 : explicitModel.model);
+1045-	}
+1046-	const pluginDynamicModel = resolvePluginDynamicModelWithRegistry(scopedParams);
+1047-	if (pluginDynamicModel) return pluginDynamicModel;
+1048-	return params.skipConfiguredFallback ? void 0 : resolveConfiguredFallbackModel(scopedParams);
+1049-}
+1050-function resolveModel(provider, modelId, agentDir, cfg, options) {
+1051-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
+1052-	const normalizedRef = normalizeProviderModelRef({
+1053-		provider,
+1054-		modelId,
+1055-		cfg,
+1056-		workspaceDir
+1057-	});
+1058-	const resolvedAgentDir = agentDir ?? resolveDefaultAgentDir(cfg ?? {});
+1059-	const cachedStores = !options?.authStorage && !options?.modelRegistry ? discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) : void 0;
+1060-	const authStorage = options?.authStorage ?? cachedStores?.authStorage ?? discoverAuthStorage(resolvedAgentDir);
+1061-	const modelRegistry = options?.modelRegistry ?? cachedStores?.modelRegistry ?? discoverModels(authStorage, resolvedAgentDir);
+1062-	const runtimeHooks = resolveRuntimeHooks(options);
+1063-	const model = resolveModelWithRegistry({
+1064-		provider: normalizedRef.provider,
+1065-		modelId: normalizedRef.model,
+1066-		modelRegistry,
+1067-		cfg,
+1068-		agentDir: resolvedAgentDir,
+1069-		workspaceDir,
+1070-		authProfileId: options?.authProfileId,
+1071-		preferredProfile: options?.preferredProfile,
+1072-		runtimeHooks
+1073-	});
+1074-	if (model) return {
+1075-		model,
+1076-		authStorage,
+1077-		modelRegistry
+1078-	};
+1079-	return {
+1080-		error: buildUnknownModelError({
+1081-			provider: normalizedRef.provider,
+1082-			modelId: normalizedRef.model,
+1083-			cfg,
+1084-			agentDir: resolvedAgentDir,
+1085-			workspaceDir,
+1086-			runtimeHooks
+1087-		}),
+1088-		authStorage,
+1089-		modelRegistry
+1090-	};
+1091-}
+1092-async function resolveModelAsync(provider, modelId, agentDir, cfg, options) {
+1093-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
