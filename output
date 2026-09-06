@@ -1,124 +1,1000 @@
-aihome@AIHome:/opt/aihome-test/source$ cd /opt/aihome-test/source
-cat config/openclaw/openclaw.json5
-// AIHome OpenClaw-Test baseline hardening.
-// Pinned source/release: OpenClaw v2026.7.1-2 / commit 0790d9f593ad30c940ed93b5872a8cf6d6f3cf8c.
-// Do not widen tools/plugins/MCP/providers without a new audit.
-{
-  gateway: {
-    mode: "local",
-    bind: "loopback",
-  },
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
 
-  agents: {
-    defaults: {
-      model: {
-        primary: "google/gemini-3.6-flash",
-        fallbacks: [],
-      },
-      skills: [],
-      subagents: {
-        maxConcurrent: 1,
-        runTimeoutSeconds: 300,
-      },
-    },
-  },
 
-  // OpenClaw v2026.7.1-2 resolves forward-compatible Gemini models by
-  // cloning a Google catalog template. Keep the explicit Gemini 3.6 row
-  // transport-complete so the resolver cannot lose Google's API/base URL
-  // when this configured model entry is selected.
-  models: {
-    mode: "merge",
-    providers: {
-      google: {
-        baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-        api: "google-generative-ai",
-        models: [
-          {
-            id: "gemini-3.6-flash",
-            name: "Gemini 3.6 Flash",
-            reasoning: true,
-            input: ["text", "image"],
-            cost: {
-              input: 0,
-              output: 0,
-              cacheRead: 0,
-              cacheWrite: 0,
-            },
-            contextWindow: 1048576,
-            maxTokens: 65536,
-          },
-        ],
-      },
-    },
-  },
 
-  tools: {
-    profile: "minimal",
-    allow: ["group:memory", "session_status"],
-    deny: [
-      "group:runtime",
-      "group:fs",
-      "group:web",
-      "group:ui",
-      "group:automation",
-      "group:messaging",
-      "group:nodes",
-      "group:agents",
-      "group:media",
-      "group:plugins",
-      "sessions_spawn",
-      "subagents",
-      "cron",
-      "browser",
-      "canvas",
-      "exec",
-      "process",
-      "code_execution",
-      "gateway",
-      "message",
-    ],
-    codeMode: { enabled: false },
-    agentToAgent: { enabled: false },
-    elevated: { enabled: false },
-    loopDetection: {
-      enabled: true,
-      historySize: 30,
-      warningThreshold: 10,
-      criticalThreshold: 20,
-      globalCircuitBreakerThreshold: 30,
-      detectors: {
-        genericRepeat: true,
-        knownPollNoProgress: true,
-        pingPong: true,
-      },
-    },
-  },
 
-  // Google is the only explicitly enabled bundled provider plugin for TEST.
-  // No channel, tool, MCP, or external plugin is enabled by this setting.
-  plugins: {
-    enabled: true,
-    allow: ["google"],
-    entries: {
-      google: {
-        enabled: true,
-      },
-    },
-  },
 
-  // MCP/ACP bridge intentionally disabled by omission.
-  skills: {
-    load: {
-      extraDirs: [],
-      watch: false,
-    },
-    install: {
-      allowUploadedArchives: false,
-    },
-  },
 
-  cron: {
-    enabled: false,
-  },
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+ ESCOD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
+index 2d3825c..8b08623 100644
+--- a/.github/workflows/openclaw-test-box-deploy.yml
++++ b/.github/workflows/openclaw-test-box-deploy.yml
+@@ -20,10 +20,11 @@ jobs:
+       - linux
+       - x64
+       - aihome-box-test
+-    timeout-minutes: 15
++    timeout-minutes: 20
+     env:
+       EXPECTED_BRANCH: Openclaw-Test
+       SOURCE_DIR: /opt/aihome-test/source
++      MODEL: google/gemini-3.6-flash
+ 
+     steps:
+       - name: Checkout Openclaw-Test
+@@ -52,18 +53,15 @@ jobs:
+           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
+           grep -Fq 'google:' config/openclaw/openclaw.json5
+           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
+-          echo 'MODEL=google/gemini-3.6-flash'
++          echo "MODEL=${MODEL}"
+           echo 'FALLBACKS=[]'
+           echo 'PROVIDER_PLUGIN=google'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
++          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
+ 
+       - name: Sync Openclaw-Test to TEST source
+         shell: bash
+         run: |
+           set -euo pipefail
+-          # rsync is not guaranteed on the minimal Box runner image.
+-          # Mirror the checkout with standard GNU tar while preserving any
+-          # existing .git directory in SOURCE_DIR.
+           find "${SOURCE_DIR}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+           tar --exclude=.git -cf - . | tar -xf - -C "${SOURCE_DIR}"
+ 
+@@ -75,7 +73,6 @@ jobs:
+           docker compose -f compose/openclaw.yml config --quiet
+           ! grep -Fq 'GEMINI_API_KEY:' compose/openclaw.yml
+           echo 'COMPOSE_CONFIG=PASS'
+-          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
+ 
+       - name: Restart OpenClaw TEST
+         working-directory: /opt/aihome-test/source
+@@ -99,10 +96,6 @@ jobs:
+               test "${memory_swap}" = "8589934592"
+               test "${nano_cpus}" = "1500000000"
+               test "${pids_limit}" = "256"
+-              echo 'MEM_LIMIT=4GiB'
+-              echo 'MEMSWAP_LIMIT=8GiB'
+-              echo 'CPU_LIMIT=1.50'
+:
