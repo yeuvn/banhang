@@ -1,88 +1,74 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1035,1145p" /app/dist/model-wpoKGSDF.js
+sed -n "1145,1235p" /app/dist/model-wpoKGSDF.js
 '
-			cfg: scopedParams.cfg,
-			agentDir: scopedParams.agentDir,
-			workspaceDir,
-			runtimeHooks
-		})) return explicitModel.model;
-		return resolvePluginDynamicModelWithRegistry(scopedParams) ?? (shouldDropRuntimePreferredExplicitMiss({
-			provider: scopedParams.provider,
-			modelId: scopedParams.modelId,
-			explicitModel
-		}) ? void 0 : explicitModel.model);
-	}
-	const pluginDynamicModel = resolvePluginDynamicModelWithRegistry(scopedParams);
-	if (pluginDynamicModel) return pluginDynamicModel;
-	return params.skipConfiguredFallback ? void 0 : resolveConfiguredFallbackModel(scopedParams);
-}
-function resolveModel(provider, modelId, agentDir, cfg, options) {
-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
-	const normalizedRef = normalizeProviderModelRef({
-		provider,
-		modelId,
-		cfg,
-		workspaceDir
-	});
-	const resolvedAgentDir = agentDir ?? resolveDefaultAgentDir(cfg ?? {});
-	const cachedStores = !options?.authStorage && !options?.modelRegistry ? discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) : void 0;
-	const authStorage = options?.authStorage ?? cachedStores?.authStorage ?? discoverAuthStorage(resolvedAgentDir);
-	const modelRegistry = options?.modelRegistry ?? cachedStores?.modelRegistry ?? discoverModels(authStorage, resolvedAgentDir);
-	const runtimeHooks = resolveRuntimeHooks(options);
-	const model = resolveModelWithRegistry({
+	const providerConfig = resolveConfiguredProviderConfig(cfg, normalizedRef.provider);
+	const authProfile = resolveDynamicModelAuthProfile({
 		provider: normalizedRef.provider,
-		modelId: normalizedRef.model,
-		modelRegistry,
 		cfg,
 		agentDir: resolvedAgentDir,
-		workspaceDir,
 		authProfileId: options?.authProfileId,
-		preferredProfile: options?.preferredProfile,
-		runtimeHooks
+		preferredProfile: options?.preferredProfile
 	});
-	if (model) return {
-		model,
-		authStorage,
-		modelRegistry
+	let staticCatalogLookup;
+	const resolveStaticCatalogModel = async () => {
+		if (!options?.allowBundledStaticCatalogFallback) return;
+		staticCatalogLookup ??= (async () => {
+			const manifestModel = resolveBundledStaticCatalogModel({
+				provider: normalizedRef.provider,
+				modelId: normalizedRef.model,
+				cfg,
+				workspaceDir
+			});
+			if (manifestModel) return manifestModel;
+			return await resolveBundledProviderStaticCatalogModel({
+				provider: normalizedRef.provider,
+				modelId: normalizedRef.model,
+				cfg,
+				workspaceDir
+			});
+		})();
+		return await staticCatalogLookup;
 	};
-	return {
-		error: buildUnknownModelError({
+	const resolveStaticCatalogFallbackModel = async () => {
+		const catalogModel = await resolveStaticCatalogModel();
+		if (!catalogModel) return;
+		const overriddenStaticCatalogModel = applyConfiguredProviderOverrides({
 			provider: normalizedRef.provider,
+			discoveredModel: catalogModel,
+			providerConfig,
 			modelId: normalizedRef.model,
+			cfg,
+			runtimeHooks,
+			workspaceDir,
+			preferDiscoveredModelMetadata: true,
+			preferDiscoveredTransport: options?.preferBundledStaticCatalogTransport
+		});
+		return normalizeResolvedModel({
+			provider: normalizedRef.provider,
 			cfg,
 			agentDir: resolvedAgentDir,
 			workspaceDir,
+			model: overriddenStaticCatalogModel,
 			runtimeHooks
-		}),
-		authStorage,
-		modelRegistry
+		});
 	};
-}
-async function resolveModelAsync(provider, modelId, agentDir, cfg, options) {
-	const workspaceDir = resolveModelWorkspaceDir(cfg, options?.workspaceDir);
-	const normalizedRef = normalizeProviderModelRef({
-		provider,
-		modelId,
-		cfg,
-		workspaceDir
-	});
-	const resolvedAgentDir = agentDir ?? resolveDefaultAgentDir(cfg ?? {});
-	const emptyDiscoveryStores = options?.skipAgentDiscovery && (!options.authStorage || !options.modelRegistry) ? createEmptyAgentDiscoveryStores() : void 0;
-	const cachedStores = !emptyDiscoveryStores && !options?.authStorage && !options?.modelRegistry ? discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) : void 0;
-	const authStorage = options?.authStorage ?? emptyDiscoveryStores?.authStorage ?? cachedStores?.authStorage ?? discoverAuthStorage(resolvedAgentDir);
-	const modelRegistry = options?.modelRegistry ?? emptyDiscoveryStores?.modelRegistry ?? cachedStores?.modelRegistry ?? discoverModels(authStorage, resolvedAgentDir);
-	const runtimeHooks = resolveRuntimeHooks(options);
-	const explicitModel = resolveExplicitModelWithRegistry({
-		provider: normalizedRef.provider,
-		modelId: normalizedRef.model,
-		modelRegistry,
-		cfg,
-		agentDir: resolvedAgentDir,
-		workspaceDir,
-		runtimeHooks
-	});
-	if (explicitModel?.kind === "suppressed") {
-		const suppressedRuntimeModel = resolveRuntimePreferredSuppressedModel({
+	const resolveDynamicAttempt = async () => {
+		await runtimeHooks.prepareProviderDynamicModel({
+			provider: normalizedRef.provider,
+			config: cfg,
+			workspaceDir,
+			context: {
+				config: cfg,
+				agentDir: resolvedAgentDir,
+				workspaceDir,
+				provider: normalizedRef.provider,
+				modelId: normalizedRef.model,
+				modelRegistry,
+				providerConfig,
+				...authProfile
+			}
+		});
+		return resolveModelWithRegistry({
 			provider: normalizedRef.provider,
 			modelId: normalizedRef.model,
 			modelRegistry,
@@ -91,24 +77,18 @@ async function resolveModelAsync(provider, modelId, agentDir, cfg, options) {
 			workspaceDir,
 			authProfileId: options?.authProfileId,
 			preferredProfile: options?.preferredProfile,
-			runtimeHooks
+			runtimeHooks,
+			...options?.allowBundledStaticCatalogFallback ? { skipConfiguredFallback: true } : {}
 		});
-		if (suppressedRuntimeModel) return {
-			model: suppressedRuntimeModel,
-			authStorage,
-			modelRegistry
-		};
-		return {
-			error: buildUnknownModelError({
-				provider: normalizedRef.provider,
-				modelId: normalizedRef.model,
-				cfg,
-				agentDir: resolvedAgentDir,
-				workspaceDir,
-				runtimeHooks
-			}),
-			authStorage,
-			modelRegistry
-		};
-	}
-	const providerConfig = resolveConfiguredProviderConfig(cfg, normalizedRef.provider);
+	};
+	const providerRuntimeMetadataShouldWin = shouldCompareProviderRuntimeResolvedModel({
+		provider: normalizedRef.provider,
+		modelId: normalizedRef.model,
+		cfg,
+		agentDir: resolvedAgentDir,
+		workspaceDir,
+		runtimeHooks
+	});
+	let model = explicitModel?.kind === "resolved" && !providerRuntimeMetadataShouldWin ? explicitModel.model : void 0;
+	model ??= await resolveDynamicAttempt();
+	if (!model && !explicitModel && options?.retryTransientProviderRuntimeMiss) model = await resolveDynamicAttempt();
