@@ -1,554 +1,272 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1,260p" /app/node_modules/@openclaw/ai/src/providers/google.ts
+grep -n -E "runGoogleGenerateContentLifecycle|generateContentStream|401|Authentication|Failover" \
+/app/node_modules/@openclaw/ai/src/providers/google-shared.ts
 '
-// Google provider adapts Gemini streams and tools to the agent runtime.
-import { type GenerateContentParameters, GoogleGenAI } from "@google/genai";
-import { getEnvApiKey } from "../env-api-keys.js";
-import { getAiTransportHost, resolveAiTransportHeaderSentinels } from "../host.js";
-import type { Context, Model, SimpleStreamOptions, StreamFunction } from "../types.js";
-import { AssistantMessageEventStream } from "../utils/event-stream.js";
-import {
-  buildGoogleGenerateContentParams,
-  buildGoogleSimpleThinking,
-  createGoogleAssistantOutput,
-  getDisabledGoogleThinkingConfig,
-  type GoogleProviderOptions,
-  runGoogleGenerateContentLifecycle,
-} from "./google-shared.js";
-import { buildBaseOptions } from "./simple-options.js";
-
-type GoogleOptions = GoogleProviderOptions;
-
-// Counter for generating unique tool call IDs
-let toolCallCounter = 0;
-
-export const streamGoogle: StreamFunction<"google-generative-ai", GoogleOptions> = (
-  model: Model<"google-generative-ai">,
-  context: Context,
-  options?: GoogleOptions,
-) => {
-  const stream = new AssistantMessageEventStream();
-  const output = createGoogleAssistantOutput(model, "google-generative-ai");
-
-  void runGoogleGenerateContentLifecycle({
-    stream,
-    model,
-    output,
-    options,
-    createClient: () => {
-      const apiKey = options?.apiKey || getEnvApiKey(model.provider) || "";
-      return createClient(model, apiKey, options?.headers);
-    },
-    buildParams: () => buildParams(model, context, options),
-    nextToolCallId: (name) => `${name}_${Date.now()}_${++toolCallCounter}`,
-  });
-
-  return stream;
-};
-
-export const streamSimpleGoogle: StreamFunction<"google-generative-ai", SimpleStreamOptions> = (
-  model: Model<"google-generative-ai">,
-  context: Context,
-  options?: SimpleStreamOptions,
-) => {
-  const apiKey = options?.apiKey || getEnvApiKey(model.provider);
-  if (!apiKey) {
-    throw new Error(`No API key for provider: ${model.provider}`);
-  }
-
-  const base = buildBaseOptions(model, options, apiKey);
-  return streamGoogle(model, context, {
-    ...base,
-    thinking: buildGoogleSimpleThinking(model, options, {
-      includeGemma4ThinkingLevel: true,
-      useFlashLiteBudgets: true,
+66:    generateContentStream(
+437:export async function runGoogleGenerateContentLifecycle<T extends GoogleApiType>(params: {
+455:    const googleStream = await client.models.generateContentStream(requestParams);
+aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
+sed -n "500,760p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
+'
+    ...(Object.keys(generationConfig).length > 0 && generationConfig),
+    ...(context.systemPrompt && {
+      systemInstruction: sanitizeSurrogates(stripSystemPromptCacheBoundary(context.systemPrompt)),
     }),
-  } satisfies GoogleOptions);
-};
-
-function createClient(
-  model: Model<"google-generative-ai">,
-  apiKey?: string,
-  optionsHeaders?: Record<string, string>,
-): GoogleGenAI {
-  const httpOptions: { baseUrl?: string; apiVersion?: string; headers?: Record<string, string> } =
-    {};
-  if (model.baseUrl) {
-    httpOptions.baseUrl = model.baseUrl;
-    httpOptions.apiVersion = ""; // baseUrl already includes version path, don't append
-  }
-  if (model.headers || optionsHeaders) {
-    httpOptions.headers = resolveAiTransportHeaderSentinels({
-      ...model.headers,
-      ...optionsHeaders,
-    });
-  }
-
-  // @google/genai exposes RequestInit options but no custom fetch; unwrap at construction.
-  const resolvedApiKey = apiKey ? getAiTransportHost().resolveSecretSentinel(apiKey) : undefined;
-  return new GoogleGenAI({
-    apiKey: resolvedApiKey,
-    httpOptions: Object.keys(httpOptions).length > 0 ? httpOptions : undefined,
-  });
-}
-
-function buildParams(
-  model: Model<"google-generative-ai">,
-  context: Context,
-  options: GoogleOptions = {},
-): GenerateContentParameters {
-  return buildGoogleGenerateContentParams(model, context, options, {
-    getDisabledThinkingConfig: (modelLocal) =>
-      getDisabledGoogleThinkingConfig(modelLocal, { includeGemma4: true }),
-  });
-}
-aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1,320p" /app/node_modules/@openclaw/ai/src/providers/google-shared.ts
-'
-/**
- * Shared utilities for Google Generative AI and Google Vertex providers.
- */
-
-import {
-  type Content,
-  FinishReason,
-  FunctionCallingConfigMode,
-  type GenerateContentConfig,
-  type GenerateContentParameters,
-  type GenerateContentResponse,
-  type Part,
-  type ThinkingConfig,
-} from "@google/genai";
-import { calculateCost, clampThinkingLevel } from "../model-utils.js";
-import type {
-  Api,
-  AssistantMessage,
-  Context,
-  ImageContent,
-  Model,
-  SimpleStreamOptions,
-  StopReason,
-  TextContent,
-  ThinkingBudgets,
-  ThinkingContent,
-  ThinkingLevel as AgentThinkingLevel,
-  Tool,
-  ToolCall,
-  StreamOptions,
-} from "../types.js";
-import type { AssistantMessageEventStream } from "../utils/event-stream.js";
-import { sanitizeSurrogates } from "../utils/sanitize-unicode.js";
-import { stripSystemPromptCacheBoundary } from "../utils/system-prompt-cache-boundary.js";
-import { describeToolResultMediaPlaceholder, extractToolResultText } from "./tool-result-text.js";
-import { transformMessages } from "./transform-messages.js";
-
-type GoogleApiType = "google-generative-ai" | "google-vertex";
-
-/**
- * Thinking level for Gemini 3 models.
- * Mirrors Google's ThinkingLevel enum values.
- */
-export type GoogleThinkingLevel =
-  | "THINKING_LEVEL_UNSPECIFIED"
-  | "MINIMAL"
-  | "LOW"
-  | "MEDIUM"
-  | "HIGH";
-
-type GoogleToolChoice = "auto" | "none" | "any";
-
-type GoogleThinkingOptions = {
-  enabled: boolean;
-  budgetTokens?: number;
-  level?: GoogleThinkingLevel;
-};
-
-export type GoogleProviderOptions = StreamOptions & {
-  toolChoice?: GoogleToolChoice;
-  thinking?: GoogleThinkingOptions;
-};
-
-type GoogleGenerateContentClient = {
-  models: {
-    generateContentStream(
-      params: GenerateContentParameters,
-    ): Promise<AsyncIterable<GenerateContentResponse>> | AsyncIterable<GenerateContentResponse>;
+    ...(context.tools && context.tools.length > 0 && { tools: convertTools(context.tools) }),
   };
-};
 
-type ClampedGoogleThinkingLevel = Exclude<AgentThinkingLevel, "xhigh" | "max">;
-
-/**
- * Determines whether a streamed Gemini `Part` should be treated as "thinking".
- *
- * Protocol note (Gemini / Vertex AI thought signatures):
- * - `thought: true` is the definitive marker for thinking content (thought summaries).
- * - `thoughtSignature` is an encrypted representation of the model's internal thought process
- *   used to preserve reasoning context across multi-turn interactions.
- * - `thoughtSignature` can appear on ANY part type (text, functionCall, etc.) - it does NOT
- *   indicate the part itself is thinking content.
- * - For non-functionCall responses, the signature appears on the last part for context replay.
- * - When persisting/replaying model outputs, signature-bearing parts must be preserved as-is;
- *   do not merge/move signatures across parts.
- *
- * See: https://ai.google.dev/gemini-api/docs/thought-signatures
- */
-function isThinkingPart(part: Pick<Part, "thought" | "thoughtSignature">): boolean {
-  return part.thought === true;
-}
-
-/**
- * Retain thought signatures during streaming.
- *
- * Some backends only send `thoughtSignature` on the first delta for a given part/block; later deltas may omit it.
- * This helper preserves the last non-empty signature for the current block.
- *
- * Note: this does NOT merge or move signatures across distinct response parts. It only prevents
- * a signature from being overwritten with `undefined` within the same streamed block.
- */
-export function retainThoughtSignature(
-  existing: string | undefined,
-  incoming: string | undefined,
-): string | undefined {
-  if (typeof incoming === "string" && incoming.length > 0) {
-    return incoming;
+  if (context.tools && context.tools.length > 0 && options.toolChoice) {
+    config.toolConfig = {
+      functionCallingConfig: {
+        mode: mapToolChoice(options.toolChoice),
+      },
+    };
+  } else {
+    config.toolConfig = undefined;
   }
-  return existing;
-}
 
-// Thought signatures must be base64 for Google APIs (TYPE_BYTES).
-const base64SignaturePattern = /^[A-Za-z0-9+/]+={0,2}$/;
-
-function isValidThoughtSignature(signature: string | undefined): boolean {
-  if (!signature) {
-    return false;
+  if (options.thinking?.enabled && model.reasoning) {
+    const thinkingConfig: ThinkingConfig = { includeThoughts: true };
+    if (options.thinking.level !== undefined) {
+      thinkingConfig.thinkingLevel = configHooks?.mapThinkingLevel
+        ? configHooks.mapThinkingLevel(options.thinking.level)
+        : (options.thinking.level as ThinkingConfig["thinkingLevel"]);
+    } else if (options.thinking.budgetTokens !== undefined) {
+      thinkingConfig.thinkingBudget = options.thinking.budgetTokens;
+    }
+    config.thinkingConfig = thinkingConfig;
+  } else if (model.reasoning && options.thinking && !options.thinking.enabled) {
+    config.thinkingConfig = configHooks?.getDisabledThinkingConfig
+      ? configHooks.getDisabledThinkingConfig(model)
+      : getDisabledGoogleThinkingConfig(model);
   }
-  if (signature.length % 4 !== 0) {
-    return false;
+
+  if (options.signal) {
+    if (options.signal.aborted) {
+      throw new Error("Request aborted");
+    }
+    config.abortSignal = options.signal;
   }
-  return base64SignaturePattern.test(signature);
+
+  return {
+    model: model.id,
+    contents,
+    config,
+  };
 }
 
-/**
- * Only keep signatures from the same provider/model and with valid base64.
- */
-function resolveThoughtSignature(
-  isSameProviderAndModel: boolean,
-  signature: string | undefined,
-): string | undefined {
-  return isSameProviderAndModel && isValidThoughtSignature(signature) ? signature : undefined;
-}
-
-/**
- * Models via Google APIs that require explicit tool call IDs in function calls/responses.
- */
-export function requiresToolCallId(modelId: string): boolean {
-  return modelId.startsWith("claude-") || modelId.startsWith("gpt-oss-");
-}
-
-function getGeminiMajorVersion(modelId: string): number | undefined {
-  const match = modelId.toLowerCase().match(/^gemini(?:-live)?-(\d+)/);
-  if (!match) {
-    return undefined;
-  }
-  return Number.parseInt(match[1], 10);
-}
-
-function supportsMultimodalFunctionResponse(modelId: string): boolean {
-  const geminiMajorVersion = getGeminiMajorVersion(modelId);
-  if (geminiMajorVersion !== undefined) {
-    return geminiMajorVersion >= 3;
-  }
-  return true;
-}
-
-/**
- * Convert internal messages to Gemini Content[] format.
- */
-export function convertMessages<T extends GoogleApiType>(
+export function buildGoogleSimpleThinking<T extends GoogleApiType>(
   model: Model<T>,
-  context: Context,
-): Content[] {
-  const contents: Content[] = [];
-  const normalizeToolCallId = (id: string): string => {
-    if (!requiresToolCallId(model.id)) {
-      return id;
-    }
-    return id.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
-  };
+  options: SimpleStreamOptions | undefined,
+  config?: {
+    includeGemma4ThinkingLevel?: boolean;
+    useFlashLiteBudgets?: boolean;
+  },
+): GoogleThinkingOptions {
+  if (!options?.reasoning || options.reasoning === "off") {
+    return { enabled: false };
+  }
 
-  const transformedMessages = transformMessages(context.messages, model, normalizeToolCallId);
+  const clampedReasoning = clampThinkingLevel(model, options.reasoning);
+  const effort = (
+    clampedReasoning === "off" || clampedReasoning === "max" ? "high" : clampedReasoning
+  ) as ClampedGoogleThinkingLevel;
 
-  // Parallel calls need one immediate function-response turn. Gemini < 3 images cannot
-  // live inside functionResponse, so hold them until the consecutive result run ends.
-  const pendingToolResultImageTurns: Content[] = [];
-  let activeToolResultParts: Part[] | undefined;
-  const flushToolResultRun = (): void => {
-    contents.push(...pendingToolResultImageTurns);
-    pendingToolResultImageTurns.length = 0;
-    activeToolResultParts = undefined;
-  };
-
-  for (const msg of transformedMessages) {
-    if (msg.role !== "toolResult") {
-      flushToolResultRun();
-    }
-    if (msg.role === "user") {
-      if (typeof msg.content === "string") {
-        contents.push({
-          role: "user",
-          parts: [{ text: sanitizeSurrogates(msg.content) }],
-        });
-      } else {
-        const parts: Part[] = msg.content.map((item) => {
-          if (item.type === "text") {
-            return { text: sanitizeSurrogates(item.text) };
-          }
-          return {
-            inlineData: {
-              mimeType: item.mimeType,
-              data: item.data,
-            },
-          };
-        });
-        if (parts.length === 0) {
-          continue;
-        }
-        contents.push({
-          role: "user",
-          parts,
-        });
-      }
-    } else if (msg.role === "assistant") {
-      const parts: Part[] = [];
-      // Check if message is from same provider and model - only then keep thinking blocks
-      const isSameProviderAndModel = msg.provider === model.provider && msg.model === model.id;
-
-      for (const block of msg.content) {
-        if (block.type === "text") {
-          // Skip empty text blocks
-          if (!block.text || block.text.trim() === "") {
-            continue;
-          }
-          const thoughtSignature = resolveThoughtSignature(
-            isSameProviderAndModel,
-            block.textSignature,
-          );
-          parts.push({
-            text: sanitizeSurrogates(block.text),
-            ...(thoughtSignature && { thoughtSignature }),
-          });
-        } else if (block.type === "thinking") {
-          // Skip empty thinking blocks
-          if (!block.thinking || block.thinking.trim() === "") {
-            continue;
-          }
-          // Only keep as thinking block if same provider AND same model
-          // Otherwise convert to plain text (no tags to avoid model mimicking them)
-          if (isSameProviderAndModel) {
-            const thoughtSignature = resolveThoughtSignature(
-              isSameProviderAndModel,
-              block.thinkingSignature,
-            );
-            parts.push({
-              thought: true,
-              text: sanitizeSurrogates(block.thinking),
-              ...(thoughtSignature && { thoughtSignature }),
-            });
-          } else {
-            parts.push({
-              text: sanitizeSurrogates(block.thinking),
-            });
-          }
-        } else if (block.type === "toolCall") {
-          const thoughtSignature = resolveThoughtSignature(
-            isSameProviderAndModel,
-            block.thoughtSignature,
-          );
-          const part: Part = {
-            functionCall: {
-              name: block.name,
-              args: block.arguments ?? {},
-              ...(requiresToolCallId(model.id) ? { id: block.id } : {}),
-            },
-            ...(thoughtSignature && { thoughtSignature }),
-          };
-          parts.push(part);
-        }
-      }
-
-      if (parts.length === 0) {
-        continue;
-      }
-      contents.push({
-        role: "model",
-        parts,
-      });
-    } else if (msg.role === "toolResult") {
-      // Extract text and image content
-      const textResult = extractToolResultText(msg.content);
-      const imageContent = model.input.includes("image")
-        ? msg.content.filter((c): c is ImageContent => c.type === "image")
-        : [];
-
-      const hasText = textResult.length > 0;
-      const hasImages = imageContent.length > 0;
-      const mediaPlaceholder = describeToolResultMediaPlaceholder(msg.content);
-
-      // Gemini 3+ models support multimodal function responses with images nested inside
-      // functionResponse.parts. Claude and other non-Gemini models behind Cloud Code Assist /
-      // Gemini < 3 still needs a separate user image turn.
-      const modelSupportsMultimodalFunctionResponse = supportsMultimodalFunctionResponse(model.id);
-
-      // Use "output" key for success, "error" key for errors as per SDK documentation
-      const responseValue = hasText ? sanitizeSurrogates(textResult) : (mediaPlaceholder ?? "");
-
-      const imageParts: Part[] = imageContent.map((imageBlock) => ({
-        inlineData: {
-          mimeType: imageBlock.mimeType,
-          data: imageBlock.data,
-        },
-      }));
-
-      const includeId = requiresToolCallId(model.id);
-      const functionResponsePart: Part = {
-        functionResponse: {
-          name: msg.toolName,
-          response: msg.isError ? { error: responseValue } : { output: responseValue },
-          ...(hasImages && modelSupportsMultimodalFunctionResponse && { parts: imageParts }),
-          ...(includeId ? { id: msg.toolCallId } : {}),
-        },
-      };
-
-      // Cloud Code Assist API requires all function responses to be in a single user turn.
-      if (activeToolResultParts) {
-        activeToolResultParts.push(functionResponsePart);
-      } else {
-        activeToolResultParts = [functionResponsePart];
-aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-sed -n "1,260p" /app/node_modules/@openclaw/ai/src/providers/google-client-auth.test.ts
-'
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { configureAiTransportHost } from "../host.js";
-import type { Context, Model } from "../types.js";
-
-const googleMockState = vi.hoisted(() => ({ configs: [] as unknown[] }));
-
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: class MockGoogleGenAI {
-    models = {
-      generateContentStream: vi.fn(() => {
-        throw new Error("stop after constructor");
+  if (
+    isGemini3ProModel(model) ||
+    isGemini3FlashModel(model) ||
+    (config?.includeGemma4ThinkingLevel && isGemma4Model(model))
+  ) {
+    return {
+      enabled: true,
+      level: getGoogleThinkingLevel(effort, model, {
+        includeGemma4: config?.includeGemma4ThinkingLevel,
       }),
     };
+  }
 
-    constructor(config: unknown) {
-      googleMockState.configs.push(config);
+  return {
+    enabled: true,
+    budgetTokens: getGoogleBudget(model, effort, options.thinkingBudgets, {
+      useFlashLiteBudgets: config?.useFlashLiteBudgets,
+    }),
+  };
+}
+
+export function getDisabledGoogleThinkingConfig<T extends GoogleApiType>(
+  model: Model<T>,
+  config?: {
+    includeGemma4?: boolean;
+    mapThinkingLevel?: (level: GoogleThinkingLevel) => ThinkingConfig["thinkingLevel"];
+  },
+): ThinkingConfig {
+  const mapThinkingLevel = (level: GoogleThinkingLevel): ThinkingConfig["thinkingLevel"] =>
+    config?.mapThinkingLevel
+      ? config.mapThinkingLevel(level)
+      : (level as ThinkingConfig["thinkingLevel"]);
+
+  // Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
+  // do not support full thinking-off either. For Gemini 3 models, use the lowest supported
+  // thinkingLevel without includeThoughts so hidden thinking remains invisible to OpenClaw.
+  if (isGemini3ProModel(model)) {
+    return { thinkingLevel: mapThinkingLevel("LOW") };
+  }
+  if (isGemini3FlashModel(model)) {
+    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
+  }
+  if (config?.includeGemma4 && isGemma4Model(model)) {
+    return { thinkingLevel: mapThinkingLevel("MINIMAL") };
+  }
+
+  // Gemini 2.x supports disabling via thinkingBudget = 0.
+  return { thinkingBudget: 0 };
+}
+
+export function isGemma4Model<T extends GoogleApiType>(model: Model<T>): boolean {
+  return /gemma-?4/.test(model.id.toLowerCase());
+}
+
+function isGemini3ProModel<T extends GoogleApiType>(model: Model<T>): boolean {
+  return /gemini-3(?:\.\d+)?-pro/.test(model.id.toLowerCase());
+}
+
+function isGemini3FlashModel<T extends GoogleApiType>(model: Model<T>): boolean {
+  return /gemini-3(?:\.\d+)?-flash/.test(model.id.toLowerCase());
+}
+
+function getGoogleThinkingLevel<T extends GoogleApiType>(
+  effort: ClampedGoogleThinkingLevel,
+  model: Model<T>,
+  config?: { includeGemma4?: boolean },
+): GoogleThinkingLevel {
+  if (isGemini3ProModel(model)) {
+    switch (effort) {
+      case "minimal":
+      case "low":
+        return "LOW";
+      case "medium":
+      case "high":
+        return "HIGH";
     }
-  },
-  ResourceScope: { COLLECTION: "COLLECTION" },
-  ThinkingLevel: {
-    THINKING_LEVEL_UNSPECIFIED: "THINKING_LEVEL_UNSPECIFIED",
-    MINIMAL: "MINIMAL",
-    LOW: "LOW",
-    MEDIUM: "MEDIUM",
-    HIGH: "HIGH",
-  },
-}));
-
-import { streamGoogleVertex } from "./google-vertex.js";
-import { streamGoogle } from "./google.js";
-
-const context = {
-  messages: [{ role: "user", content: "hello", timestamp: 0 }],
-} satisfies Context;
-const sentinel = "oc-sent-v1-0123456789abcdef01234567";
-
-function googleModel(): Model<"google-generative-ai"> {
-  return {
-    id: "gemini-3-flash-preview",
-    name: "Gemini 3 Flash Preview",
-    api: "google-generative-ai",
-    provider: "google",
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-    reasoning: true,
-    input: ["text"],
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-    contextWindow: 1_000_000,
-    maxTokens: 8192,
-  };
+  }
+  if (config?.includeGemma4 && isGemma4Model(model)) {
+    switch (effort) {
+      case "minimal":
+      case "low":
+        return "MINIMAL";
+      case "medium":
+      case "high":
+        return "HIGH";
+    }
+  }
+  switch (effort) {
+    case "minimal":
+      return "MINIMAL";
+    case "low":
+      return "LOW";
+    case "medium":
+      return "MEDIUM";
+    case "high":
+      return "HIGH";
+  }
+  return "HIGH";
 }
 
-function vertexModel(): Model<"google-vertex"> {
-  return {
-    ...googleModel(),
-    api: "google-vertex",
-    provider: "google-vertex",
-    baseUrl: "https://us-central1-aiplatform.googleapis.com/v1",
-  };
+function getGoogleBudget<T extends GoogleApiType>(
+  model: Model<T>,
+  effort: ClampedGoogleThinkingLevel,
+  customBudgets?: ThinkingBudgets,
+  config?: { useFlashLiteBudgets?: boolean },
+): number {
+  if (customBudgets?.[effort] !== undefined) {
+    return customBudgets[effort];
+  }
+
+  if (model.id.includes("2.5-pro")) {
+    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
+      minimal: 128,
+      low: 2048,
+      medium: 8192,
+      high: 32768,
+    };
+    return budgets[effort];
+  }
+
+  if (config?.useFlashLiteBudgets && model.id.includes("2.5-flash-lite")) {
+    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
+      minimal: 512,
+      low: 2048,
+      medium: 8192,
+      high: 24576,
+    };
+    return budgets[effort];
+  }
+
+  if (model.id.includes("2.5-flash")) {
+    const budgets: Record<ClampedGoogleThinkingLevel, number> = {
+      minimal: 128,
+      low: 2048,
+      medium: 8192,
+      high: 24576,
+    };
+    return budgets[effort];
+  }
+
+  return -1;
 }
 
-describe("Google SDK construction auth", () => {
-  beforeEach(() => {
-    googleMockState.configs = [];
-  });
+/**
+ * Map Gemini FinishReason to our StopReason.
+ */
+export function mapStopReason(reason: FinishReason): StopReason {
+  switch (reason) {
+    case FinishReason.STOP:
+      return "stop";
+    case FinishReason.MAX_TOKENS:
+      return "length";
+    case FinishReason.BLOCKLIST:
+    case FinishReason.PROHIBITED_CONTENT:
+    case FinishReason.SPII:
+    case FinishReason.SAFETY:
+    case FinishReason.IMAGE_SAFETY:
+    case FinishReason.IMAGE_PROHIBITED_CONTENT:
+    case FinishReason.IMAGE_RECITATION:
+    case FinishReason.IMAGE_OTHER:
+    case FinishReason.RECITATION:
+    case FinishReason.FINISH_REASON_UNSPECIFIED:
+    case FinishReason.OTHER:
+    case FinishReason.LANGUAGE:
+    case FinishReason.MALFORMED_FUNCTION_CALL:
+    case FinishReason.UNEXPECTED_TOOL_CALL:
+    case FinishReason.NO_IMAGE:
+      return "error";
+    default: {
+      const exhaustive: never = reason;
+      throw new Error(`Unhandled stop reason: ${String(exhaustive)}`);
+    }
+  }
+}
 
-  afterEach(() => {
-    configureAiTransportHost({});
-  });
+export async function consumeGoogleGenerateContentStream<T extends GoogleApiType>(params: {
+  chunks: AsyncIterable<GenerateContentResponse>;
+  model: Model<T>;
+  output: AssistantMessage;
+  stream: AssistantMessageEventStream;
+  signal?: AbortSignal;
+  nextToolCallId: (name: string | undefined) => string;
+}): Promise<void> {
+  params.stream.push({ type: "start", partial: params.output });
+  let currentBlock: TextContent | ThinkingContent | null = null;
+  const blocks = params.output.content;
+  const toolCallIds = new Set<string>();
+  for (const block of blocks) {
+    if (block.type === "toolCall") {
+      toolCallIds.add(block.id);
+    }
+  }
+  const blockIndex = () => blocks.length - 1;
 
-  it("unwraps Google API-key sentinels immediately before client construction", async () => {
-    const buildModelFetch = vi.fn();
-    configureAiTransportHost({
-      buildModelFetch,
-      resolveSecretSentinel: (value) => value.replaceAll(sentinel, "google-construction-secret"),
-    });
-
-    const result = await streamGoogle(
-      {
-        ...googleModel(),
-        headers: { Authorization: `Bearer ${sentinel}` },
-      },
-      context,
-      { apiKey: sentinel },
-    ).result();
-
-    expect(result.stopReason).toBe("error");
-    expect(googleMockState.configs[0]).toMatchObject({
-      apiKey: "google-construction-secret",
-      httpOptions: { headers: { Authorization: "Bearer google-construction-secret" } },
-    });
-    expect(JSON.stringify(googleMockState.configs[0])).not.toContain(sentinel);
-    expect(buildModelFetch).not.toHaveBeenCalled();
-  });
-
-  it("unwraps Vertex API-key sentinels immediately before client construction", async () => {
-    const buildModelFetch = vi.fn();
-    configureAiTransportHost({
-      buildModelFetch,
-      resolveSecretSentinel: (value) => value.replaceAll(sentinel, "vertex-construction-secret"),
-    });
-
-    const result = await streamGoogleVertex(
-      {
-        ...vertexModel(),
-        headers: { "X-Provider-Token": sentinel },
-      },
-      context,
-      {
-        apiKey: sentinel,
-        project: "demo-project",
-        location: "us-central1",
-      },
-    ).result();
-
-    expect(result.stopReason).toBe("error");
-    expect(googleMockState.configs[0]).toMatchObject({
-      apiKey: "vertex-construction-secret",
-      vertexai: true,
-      httpOptions: { headers: { "X-Provider-Token": "vertex-construction-secret" } },
-    });
-    expect(JSON.stringify(googleMockState.configs[0])).not.toContain(sentinel);
-    expect(buildModelFetch).not.toHaveBeenCalled();
-  });
-});
+  const endCurrentBlock = () => {
+    if (!currentBlock) {
+      return;
+aihome@AIHome:~/actions
