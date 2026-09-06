@@ -1,235 +1,106 @@
-aihome@AIHome:/opt/aihome-test/source$ cd /opt/aihome-test/source
+name: AIHome OpenClaw TEST Box
 
-echo "=== COMPOSE CONFIG ==="
-docker compose -f compose/openclaw.yml config
+on:
+  workflow_dispatch:
 
-echo "=== OPENCLAW CONFIG ==="
-docker compose -f compose/openclaw.yml run --rm --no-deps \
-  aihome-openclaw-test \
-  node openclaw.mjs doctor
-=== COMPOSE CONFIG ===
-name: aihome-openclaw-test
-services:
-  openclaw:
-    cap_drop:
-      - ALL
-    cpus: 1.5
-    command:
-      - sh
-      - -lc
-      - set -eu; cp /data/source-config/openclaw.json5 /data/config/openclaw.json5;
-        exec node openclaw.mjs gateway run
-    container_name: aihome-openclaw-test
-    environment:
-      NODE_OPTIONS: --max-old-space-size=1536
-      OPENCLAW_CONFIG_PATH: /data/config/openclaw.json5
-      OPENCLAW_STATE_DIR: /data/state
-      TZ: Asia/Ho_Chi_Minh
-    image: ghcr.io/openclaw/openclaw:2026.7.1-2-slim@sha256:8789721d2e9b24b780a1504b56deb4c6bd5c7dbf96a1dd117e7c45c2ed72c8ac
-    init: true
-    mem_limit: "3221225472"
-    memswap_limit: "3221225472"
-    networks:
-      default: null
-    pids_limit: 256
-    ports:
-      - mode: ingress
-        host_ip: 127.0.0.1
-        target: 18789
-        published: "18789"
-        protocol: tcp
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    stop_grace_period: 30s
-    volumes:
-      - type: bind
-        source: /opt/aihome-test/openclaw/state
-        target: /data/state
-        bind: {}
-      - type: bind
-        source: /opt/aihome-test/openclaw/workspace
-        target: /data/workspace
-        bind: {}
-      - type: bind
-        source: /opt/aihome-test/openclaw/runtime-config
-        target: /data/config
-        bind: {}
-      - type: bind
-        source: /opt/aihome-test/source/config/openclaw/openclaw.json5
-        target: /data/source-config/openclaw.json5
-        read_only: true
-        bind: {}
-networks:
-  default:
-    name: aihome-openclaw-test_default
-=== OPENCLAW CONFIG ===
-no such service: aihome-openclaw-test
-aihome@AIHome:/opt/aihome-test/source$ cd /opt/aihome-test/source
+permissions:
+  contents: read
 
-echo "=== OPENCLAW DOCTOR ==="
-docker compose -f compose/openclaw.yml run --rm --no-deps \
-  openclaw \
-  node openclaw.mjs doctor
-=== OPENCLAW DOCTOR ===
-Container aihome-openclaw-test-openclaw-run-27efe7ac6feb Creating 
-Container aihome-openclaw-test-openclaw-run-27efe7ac6feb Created 
-│
-◇  
+concurrency:
+  group: openclaw-test-box
+  cancel-in-progress: true
 
-OpenClaw 2026.7.1 (unknown) — Self-hosted, self-updating, self-aware (just kidding... unless?).
+jobs:
+  deploy-test-box:
+    name: Deploy OpenClaw TEST on Box
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - aihome-box-test
+    timeout-minutes: 15
+    env:
+      EXPECTED_BRANCH: Openclaw-Test
+      SOURCE_DIR: /opt/aihome-test/source
 
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-██░▄▄▄░██░▄▄░██░▄▄▄██░▀██░██░▄▄▀██░████░▄▄▀██░███░██
-██░███░██░▀▀░██░▄▄▄██░█░█░██░█████░████░▀▀░██░█░█░██
-██░▀▀▀░██░█████░▀▀▀██░██▄░██░▀▀▄██░▀▀░█░██░██▄▀▄▀▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-                       OPENCLAW                       
- 
-┌  OpenClaw doctor
-│
-◇  Update ──────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                           │
-│  This install is not a git checkout.                                                      │
-│  Run `openclaw update` to update via your package manager (npm/pnpm), then rerun doctor.  │
-│                                                                                           │
-├───────────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Startup optimization ────────────────────────────────────────────────────────────────────╮
-│                                                                                           │
-│  - NODE_COMPILE_CACHE is not set; repeated CLI runs can be slower on small hosts          │
-│    (Raspberry Pi/VM).                                                                     │
-│  - OPENCLAW_NO_RESPAWN is not set to 1; set it when you want routine gateway restarts to  │
-│    stay in-process instead of handing off to a managed supervisor.                        │
-│  - Suggested env for low-power hosts:                                                     │
-│    export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache                              │
-│    mkdir -p /var/tmp/openclaw-compile-cache                                               │
-│    export OPENCLAW_NO_RESPAWN=1                                                           │
-│                                                                                           │
-├───────────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Doctor warnings ──────────────────────────────────────────────────────────────────────────╮
-│                                                                                            │
-│  - Codex runtime is selected, but the Codex plugin is disabled.                            │
-│  - agents.defaults.model.primary: openai/gpt-5.5 resolves to openai/gpt-5.5 with Codex     │
-│    runtime while the Codex plugin is disabled by config.                                   │
-│  - Enable plugin loading and remove `codex` from plugins.deny, or set the affected OpenAI  │
-│    models to an OpenClaw runtime policy.                                                   │
-│                                                                                            │
-├────────────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Gateway auth ──────────────────────────────────────────────────────────────────────╮
-│                                                                                     │
-│  Gateway auth is off or missing a token. Token auth is now the recommended default  │
-│  (including loopback).                                                              │
-│                                                                                     │
-├─────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Generate and configure a gateway token now?
-│  No
-│
-◇  Command owner ────────────────────────────────────────────────────────────────────────────╮
-│                                                                                            │
-│  No command owner is configured.                                                           │
-│  A command owner is the human operator account allowed to run owner-only commands and      │
-│  approve dangerous actions, including /diagnostics, /export-trajectory, /config, and exec  │
-│  approvals.                                                                                │
-│  DM pairing only lets someone talk to the bot; it does not make that sender the owner for  │
-│  privileged commands.                                                                      │
-│  Fix: set commands.ownerAllowFrom to your channel user id, for example openclaw config     │
-│  set commands.ownerAllowFrom '["telegram:123456789"]'                                      │
-│  Restart the gateway after changing this if it is already running.                         │
-│                                                                                            │
-├────────────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Plugin registry ─────────────────────────────────────────────────────────────────────╮
-│                                                                                       │
-│  Persisted plugin registry is missing or stale.                                       │
-│  Repair with openclaw doctor --fix to rebuild /data/state/state/openclaw.sqlite from  │
-│  enabled plugins.                                                                     │
-│                                                                                       │
-├───────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Tighten permissions on /data/state to 700?
-│  Yes
-│
-◇  Tighten permissions on /data/config/openclaw.json5 to 600?
-│  Yes
-│
-◇  State integrity ──────────────────────────────────────────────────────────────────────────╮
-│                                                                                            │
-│  - State directory permissions are too open (/data/state). Recommend chmod 700.            │
-│  - Config file is group/world readable (/data/config/openclaw.json5). Recommend chmod      │
-│    600.                                                                                    │
-│  - OAuth dir not present (/data/state/credentials). Skipping create because no             │
-│    WhatsApp/pairing channel config is active.                                              │
-│  - Multiple state directories detected. This can split session history.                    │
-│    - ~/.openclaw                                                                           │
-│    Active state dir: /data/state                                                           │
-│  - 1/1 recent sessions are missing transcripts.                                            │
-│    Verify sessions in store: openclaw sessions --store                                     │
-│    "/data/state/agents/main/sessions/sessions.json"                                        │
-│    Preview cleanup impact: openclaw sessions cleanup --store                               │
-│    "/data/state/agents/main/sessions/sessions.json" --dry-run --fix-missing                │
-│    Prune missing entries: openclaw sessions cleanup --store                                │
-│    "/data/state/agents/main/sessions/sessions.json" --enforce --fix-missing                │
-│  - Main session transcript missing                                                         │
-│    (/data/state/agents/main/sessions/4b05052c-5cb2-4433-bb92-bc27897928ab.jsonl). History  │
-│    will appear to reset.                                                                   │
-│                                                                                            │
-├────────────────────────────────────────────────────────────────────────────────────────────╯
-│
-◇  Doctor changes ────────────────────────────────────────────────╮
-│                                                                 │
-│  - Tightened permissions on /data/state to 700                  │
-│  - Tightened permissions on /data/config/openclaw.json5 to 600  │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────╯
-│
-◇  Security ─────────────────────────────────╮
-│                                            │
-│  - No channel security warnings detected.  │
-│  - Run: openclaw security audit --deep     │
-│                                            │
-├────────────────────────────────────────────╯
-22:42:11 [tools] tools.allow allowlist contains unknown entries (group:memory). These entries won't match any tool unless the plugin is enabled.
-│
-◇  Skills status ─────────────────────────────────────╮
-│                                                     │
-│  Eligible: 13                                       │
-│  Missing requirements: 32                           │
-│  Incompatible (platform mismatch, auto-skipped): 6  │
-│  Blocked by allowlist: 0                            │
-│                                                     │
-├─────────────────────────────────────────────────────╯
-│
-◇  Plugins ──────╮
-│                │
-│  Loaded: 0     │
-│  Imported: 0   │
-│  Disabled: 69  │
-│  Errors: 0     │
-│                │
-├────────────────╯
-│
-◇  Enable zsh shell completion for openclaw?
-│  No
-Health check failed: gateway status requires credentials before opening a websocket Fix: configure gateway.auth token/password, pair this device, or pass --token/--password. Config: /data/config/openclaw.json5
-│
-◇  Memory search ─────────────────────────────────────────────────╮
-│                                                                 │
-│  No active memory plugin is registered for the current config.  │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────╯
-│
-◇  Gateway ────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                          │
-│  systemd user services are unavailable; install/enable systemd or run the gateway under  │
-│  your supervisor.                                                                        │
-│  If you're in a container, run the gateway in the foreground instead of `openclaw        │
-│  gateway`.                                                                               │
-│                                                                                          │
-├──────────────────────────────────────────────────────────────────────────────────────────╯
-Run "openclaw doctor --fix" to apply changes.
-│
-└  Doctor complete.
+    steps:
+      - name: Checkout Openclaw-Test
+        uses: actions/checkout@v4
+        with:
+          ref: Openclaw-Test
+          clean: true
+
+      - name: Verify runner and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "${EXPECTED_BRANCH}"
+          test -d "${SOURCE_DIR}"
+          test -f compose/openclaw.yml
+          test -f config/openclaw/openclaw.json5
+          echo "RUNNER=$(hostname)"
+          echo "COMMIT=$(git rev-parse HEAD)"
+
+      - name: Sync Openclaw-Test to TEST source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a --delete \
+            --exclude='.git/' \
+            ./ "${SOURCE_DIR}/"
+
+      - name: Validate pinned runtime configuration
+        working-directory: /opt/aihome-test/source
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f compose/openclaw.yml config >/tmp/aihome-openclaw-compose-test.yml
+          grep -Fq 'mem_limit: 4g' /tmp/aihome-openclaw-compose-test.yml
+          grep -Fq 'memswap_limit: 8g' /tmp/aihome-openclaw-compose-test.yml
+          grep -Fq 'cpus: 1.50' /tmp/aihome-openclaw-compose-test.yml
+          grep -Fq 'pids_limit: 256' /tmp/aihome-openclaw-compose-test.yml
+
+      - name: Restart OpenClaw TEST
+        working-directory: /opt/aihome-test/source
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f compose/openclaw.yml up -d --force-recreate
+
+      - name: Runtime health check
+        working-directory: /opt/aihome-test/source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 12); do
+            if docker inspect --format '{{.State.Status}}' aihome-openclaw-test 2>/dev/null | grep -Fxq running; then
+              docker compose -f compose/openclaw.yml ps
+              echo 'RUNTIME_HEALTH=PASS'
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f compose/openclaw.yml ps -a
+          echo 'RUNTIME_HEALTH=FAIL'
+          exit 1
+
+      - name: Failure diagnostics
+        if: failure()
+        working-directory: /opt/aihome-test/source
+        shell: bash
+        run: |
+          set +e
+          echo '=== docker compose ps -a ==='
+          docker compose -f compose/openclaw.yml ps -a
+          echo '=== container state ==='
+          docker inspect aihome-openclaw-test --format '{{json .State}}'
+          echo '=== container logs (last 300 lines) ==='
+          docker logs --tail 300 aihome-openclaw-test
+
+      - name: Result
+        if: always()
+        shell: bash
+        run: |
+          echo "AIHOME_BOX_RESULT=See job conclusion"
+          echo "COMMIT=${GITHUB_SHA}"
+          echo "RUNNER=$(hostname)"
