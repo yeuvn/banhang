@@ -1,74 +1,44 @@
-aihome@AIHome:~$ docker exec aihome-openclaw-test sh -lc '
-echo "=== BOOTSTRAP HELP ==="
-openclaw --help | grep -i -A3 -B3 "workspace" || true
+aihome@AIHome:~$ cd /opt/aihome-test/source && \
+docker compose -f compose/openclaw.yml stop && \
+docker run --rm \
+  --volumes-from aihome-openclaw-test \
+  --entrypoint node \
+  ghcr.io/openclaw/openclaw:2026.7.1-2-slim \
+  -e '
+const fs=require("fs");
+const path=require("path");
+const root="/data/state";
+const ws="/home/node/.openclaw/workspace";
+const att=path.join(root,"workspace-attestations");
 
-echo
-echo "=== WORKSPACE COMMANDS ==="
-openclaw gateway --help | grep -i -A3 -B3 "workspace" || true
+console.log("=== VERIFY WORKSPACE ===");
+console.log("workspace:",ws);
+console.log("entries:",fs.existsSync(ws)?fs.readdirSync(ws):["MISSING"]);
 
-echo
-echo "=== ATTESTATION ==="
-cat /data/state/workspace-attestations/*.attested
-
-echo
-echo "=== WORKSPACE ==="
-ls -la /home/node/.openclaw/workspace
-'
-=== BOOTSTRAP HELP ===
-  acp *                Run an ACP bridge backed by the Gateway
-  agent                Run an agent turn via the Gateway (use --local for
-                       embedded)
-  agents *             Manage isolated agents (workspaces + auth + routing)
-  approvals *          Manage exec approvals (gateway or node host)
-  attach               Attach Claude Code to a gateway session with scoped MCP
-                       tools
---
-  node *               Run and manage the headless node host service
-  nodes *              Manage gateway-owned nodes (pairing, status, invoke, and
-                       media)
-  onboard              Guided setup for auth, models, Gateway, workspace,
-                       channels, and skills
-  pairing *            Secure DM pairing (approve inbound requests)
-  plugins *            Manage OpenClaw plugins and extensions
---
-
-Examples:
-  openclaw onboard
-    Run guided setup for a local Gateway, workspace, auth, and channels.
-  openclaw setup
-    Create the baseline config, workspace, and session folders.
-  openclaw configure
-    Change models, Gateway, channels, plugins, skills, and health checks.
-  openclaw status
-
-=== WORKSPACE COMMANDS ===
-  --cli-backend-logs         Only show CLI backend logs in the console (includes
-                             stdout/stderr) (default: false)
-  --compact                  Alias for "--ws-log compact" (default: false)
-  --dev                      Create a dev config + workspace if missing (no
-                             BOOTSTRAP.md) (default: false)
-  --force                    Kill any existing listener on the target port
-                             before starting (default: false)
---
-                             false)
-  --raw-stream-path <path>   Raw stream jsonl path
-  --reset                    Reset dev config + credentials + sessions +
-                             workspace (requires --dev) (default: false)
-  --tailscale <mode>         Tailscale exposure mode ("off"|"serve"|"funnel")
-  --tailscale-reset-on-exit  Reset Tailscale serve/funnel configuration on
-                             shutdown (default: false)
-
-=== ATTESTATION ===
-openclaw-workspace-attestation:v1
-2026-09-05T09:15:34.662Z
-generated:AGENTS.md:c9a664b73200ae5d6b0da0908de3256cdb4dda8ba6fe99f5e6c5115c3983604c
-generated:HEARTBEAT.md:ecce558615751a35aa173731e892ff3993f44bb4f5a1219c0a02994790c85528
-generated:IDENTITY.md:2f6da67d69bd362f7aaa13c1214dcbba9f0f7cb51ff42ec5313e24d6bf6f9e55
-generated:SOUL.md:29c66a31acce424ed6cf9b1c9e77dcdc5ae79d5fe2a035765c302a34b9025e0e
-generated:TOOLS.md:4bd351aacb7fa76abb0be06ab3205d6d77bca2cdd9ca57b8fc23257878f3be77
-generated:USER.md:e418ca9a680553b3ad8f54aecb0d403330810bb77826ab5251cc1dc13368fe16
-
-=== WORKSPACE ===
+console.log("=== REMOVE STALE WORKSPACE ATTESTATION ===");
+if(fs.existsSync(att)){
+  for(const f of fs.readdirSync(att)){
+    const p=path.join(att,f);
+    if(f.endsWith(".attested")){
+      console.log("remove:",p);
+      fs.rmSync(p,{force:true});
+    }
+  }
+docker ps --filter name=aihome-openclaw-test --format "table {{.Names}}\t{{.Status}}"ith exactly: AIHOME_T
+[+] stop 1/1
+ ✔ Container aihome-openclaw-test Stopped                                                             1.0s
+=== VERIFY WORKSPACE ===
+workspace: /home/node/.openclaw/workspace
+entries: []
+=== REMOVE STALE WORKSPACE ATTESTATION ===
+remove: /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested
+=== DONE ===
+Workspace data was empty; only stale attestation files were removed.
+[+] up 1/1
+ ✔ Container aihome-openclaw-test Started                                                             1.1s
+=== WORKSPACE AFTER RECREATE ===
 total 8
 drwxrwxr-x 2 node node 4096 Sep  5 15:25 .
 drwx------ 3 node node 4096 Aug  4 07:45 ..
+=== FUNCTIONAL TEST ===
+GatewayClientRequestError: FailoverError: Unknown model: google/gemini-3.6-flash
