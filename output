@@ -1,29 +1,87 @@
-aihome@AIHome:~/actions-runner$ docker inspect aihome-openclaw-test --format 'Status={{.State.Status}} Memory={{.HostConfig.Memory}} Swap={{.HostConfig.MemorySwap}} CPU={{.HostConfig.NanoCpus}} Pids={{.HostConfig.PidsLimit}}'
-Status=running Memory=4294967296 Swap=8589934592 CPU=1500000000 Pids=256
-aihome@AIHome:~/actions-runner$ docker logs --tail 100 aihome-openclaw-test
-2026-09-06T10:22:17.435+07:00 [gateway] loading configuration…
-2026-09-06T10:22:17.538+07:00 [gateway] resolving authentication…
-2026-09-06T10:22:17.570+07:00 [gateway] starting...
-2026-09-06T10:22:18.206+07:00 [gateway] auth token was missing. Generated a runtime token for this startup without changing config; restart will generate a different token. Persist one with `openclaw config set gateway.auth.mode token` and `openclaw config set gateway.auth.token <token>`.
-2026-09-06T10:22:18.792+07:00 [gateway] starting HTTP server...
-2026-09-06T10:22:19.017+07:00 [health-monitor] started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)
-2026-09-06T10:22:19.938+07:00 [gateway] agent model: google/gemini-3.6-flash (thinking=medium, fast=off)
-2026-09-06T10:22:19.944+07:00 [gateway] http server listening (1 plugin: google; 1.9s)
-2026-09-06T10:22:19.953+07:00 [gateway] log file: /tmp/openclaw/openclaw-2026-09-06.log
-2026-09-06T10:22:20.096+07:00 [gateway] starting channels and sidecars...
-2026-09-06T10:22:20.141+07:00 [gateway] ready
-2026-09-06T10:22:20.200+07:00 [heartbeat] started
-2026-09-06T10:22:30.321+07:00 [gateway] agent runtime plugins pre-warmed in 181ms
-2026-09-06T10:28:04.133+07:00 [ws] closed before connect conn=fe733288-1c07-4d90-b548-8eca3ea4c080 peer=127.0.0.1:43258->127.0.0.1:18789 remote=127.0.0.1 fwd=n/a origin=n/a host=127.0.0.1:18789 ua=n/a code=1008 reason=connect failed phase=ws_upgrade_started
-2026-09-06T10:45:34.558+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
-2026-09-06T11:15:34.144+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
-2026-09-06T11:45:34.139+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
-2026-09-06T12:15:34.137+07:00 [heartbeat] failed: OpenClaw workspace appears to have disappeared after a recent initialization: /home/node/.openclaw/workspace. Refusing to reseed BOOTSTRAP.md over a recently attested workspace. Restore the workspace or remove /data/state/workspace-attestations/cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested if this reset was intentional.
-aihome@AIHome:~/actions-runner$ cd /opt/aihome-test/source
-git rev-parse --short HEAD
-git branch --show-current
-e831f70
-Openclaw-Test
-aihome@AIHome:/opt/aihome-test/source$ docker compose -f compose/openclaw.yml ps
-NAME                   IMAGE                                                                                                               COMMAND                  SERVICE    CREATED       STATUS                 PORTS
-aihome-openclaw-test   ghcr.io/openclaw/openclaw:2026.7.1-2-slim@sha256:8789721d2e9b24b780a1504b56deb4c6bd5c7dbf96a1dd117e7c45c2ed72c8ac   "tini -s -- sh -lc '…"   openclaw   2 hours ago   Up 2 hours (healthy)   127.0.0.1:18789->18789/tcp
+aihome@AIHome:/opt/aihome-test/source$ docker inspect aihome-openclaw-test --format '{{range .Mounts}}{{println .Type .Source "->" .Destination}}{{end}}'
+bind /opt/aihome-test/openclaw/state -> /data/state
+bind /opt/aihome-test/openclaw/workspace -> /data/workspace
+bind /opt/aihome-test/openclaw/runtime-config -> /data/config
+bind /opt/aihome-test/source/config/openclaw/openclaw.json5 -> /data/source-config/openclaw.json5
+
+aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc 'ls -la /home/node/.openclaw; echo "--- workspace ---"; ls -la /home/node/.openclaw/workspace 2>&1 || true'
+total 12
+drwx------ 3 node node 4096 Aug  4 07:45 .
+drwxr-xr-x 1 node node 4096 Aug  4 07:45 ..
+drwx------ 2 node node 4096 Aug  4 07:45 workspace
+--- workspace ---
+total 8
+drwx------ 2 node node 4096 Aug  4 07:45 .
+drwx------ 3 node node 4096 Aug  4 07:45 ..
+aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc 'echo "--- data ---"; ls -la /data; echo "--- state ---"; ls -la /data/state 2>&1 || true; echo "--- attestations ---"; ls -la /data/state/workspace-attestations 2>&1 || true'
+--- data ---
+total 24
+drwxr-xr-x 6 root root 4096 Sep  6 10:22 .
+drwxr-xr-x 1 root root 4096 Sep  6 10:22 ..
+drwxr-xr-x 2 node node 4096 Sep  5 16:45 config
+drwxr-xr-x 2 root root 4096 Sep  6 10:22 source-config
+drwx------ 8 node node 4096 Sep  5 16:15 state
+drwxrwxr-x 2 node node 4096 Sep  5 15:25 workspace
+--- state ---
+total 32
+drwx------ 8 node node 4096 Sep  5 16:15 .
+drwxr-xr-x 6 root root 4096 Sep  6 10:22 ..
+drwxr-xr-x 3 node node 4096 Sep  5 16:15 agents
+drwx------ 2 node node 4096 Sep  5 16:01 identity
+drwx------ 3 node node 4096 Sep  5 15:57 logs
+drwxr-xr-x 3 node node 4096 Sep  5 16:06 skill-workshop
+drwx------ 2 node node 4096 Sep  6 10:22 state
+drwxr-xr-x 2 node node 4096 Sep  5 16:15 workspace-attestations
+--- attestations ---
+total 12
+drwxr-xr-x 2 node node 4096 Sep  5 16:15 .
+drwx------ 8 node node 4096 Sep  5 16:15 ..
+-rw------- 1 node node  569 Sep  5 16:15 cddce8bd7eebfe25e3f3e5cf0f37a0822fa900fa1864cc27b3e2d6b7e3fb6b4b.attested
+aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc 'id; echo HOME=$HOME; pwd; df -h'
+uid=1000(node) gid=1000(node) groups=1000(node)
+HOME=/home/node
+/app
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          77G   26G   47G  36% /
+tmpfs            64M     0   64M   0% /dev
+shm              64M     0   64M   0% /dev/shm
+/dev/sda5        77G   26G   47G  36% /data/state
+tmpfs           4.0K     0  4.0K   0% /proc/acpi
+aihome@AIHome:/opt/aihome-test/source$ cd /opt/aihome-test/source
+sed -n '1,240p' compose/openclaw.yml
+name: aihome-openclaw-test
+
+services:
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:2026.7.1-2-slim@sha256:8789721d2e9b24b780a1504b56deb4c6bd5c7dbf96a1dd117e7c45c2ed72c8ac
+    container_name: aihome-openclaw-test
+    restart: unless-stopped
+    init: true
+    mem_limit: 4g
+    memswap_limit: 8g
+    cpus: 1.50
+    pids_limit: 256
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      TZ: ${AIHOME_TZ:-Asia/Ho_Chi_Minh}
+      NODE_OPTIONS: --max-old-space-size=1536
+      OPENCLAW_STATE_DIR: /data/state
+      OPENCLAW_CONFIG_PATH: /data/config/openclaw.json5
+    ports:
+      - "127.0.0.1:18789:18789"
+    volumes:
+      - /opt/aihome-test/openclaw/state:/data/state
+      - /opt/aihome-test/openclaw/workspace:/data/workspace
+      - /opt/aihome-test/openclaw/runtime-config:/data/config
+      - /opt/aihome-test/source/config/openclaw/openclaw.json5:/data/source-config/openclaw.json5:ro
+    command:
+      - sh
+      - -lc
+      - >-
+        set -eu;
+        cp /data/source-config/openclaw.json5 /data/config/openclaw.json5;
+        exec node openclaw.mjs gateway run
