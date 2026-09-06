@@ -1,126 +1,194 @@
-aihome@AIHome:/opt/aihome-test/source$ docker exec aihome-openclaw-test sh -lc '
-echo "=== AGENTS / PROVIDER TOOL POLICY ==="
-grep -n -A80 -B10 -E "agents:|byProvider:|tools:" /data/source-config/openclaw.json5
+aihome@AIHome:~$ cd /opt/aihome-test/source
+
+echo '=== 1. CONTAINER ==='
+docker inspect aihome-openclaw-test \
+  --format 'status={{.State.Status}} memory={{.HostConfig.Memory}} swap={{.HostConfig.MemorySwap}} cpu={{.HostConfig.NanoCpus}} pids={{.HostConfig.PidsLimit}}'
+
+echo
+echo '=== 2. OPENCLAW MODEL ==='
+docker exec aihome-openclaw-test node openclaw.mjs models status --json
+
+echo
+echo '=== 3. BASIC CHAT / INFERENCE ==='
+docker exec aihome-openclaw-test node openclaw.mjs infer model run \
+  --gateway \
+  --prompt 'Bạn là AIHome TEST. Trả lời chính xác: AIHome functional test đang hoạt động. Chỉ trả lời PASS.'
+=== 1. CONTAINER ===
+status=running memory=4294967296 swap=8589934592 cpu=1500000000 pids=256
+
+=== 2. OPENCLAW MODEL ===
+{
+  "configPath": "/data/config/openclaw.json5",
+  "agentDir": "/data/state/agents/main/agent",
+  "defaultModel": "google/gemini-3.6-flash",
+  "resolvedDefault": "google/gemini-3.6-flash",
+  "fallbacks": [],
+  "imageModel": null,
+  "imageFallbacks": [],
+  "aliases": {},
+  "allowed": [],
+  "auth": {
+    "storePath": "/data/state/agents/main/agent/openclaw-agent.sqlite",
+    "shellEnvFallback": {
+      "enabled": false,
+      "appliedKeys": []
+    },
+    "providersWithOAuth": [],
+    "missingProvidersInUse": [],
+    "runtimeAuthRoutes": [],
+    "providers": [
+      {
+        "provider": "google",
+        "effective": {
+          "kind": "env",
+          "detail": "AQ.Ab8RN...mgze6WVw"
+        },
+        "profiles": {
+          "count": 0,
+          "oauth": 0,
+          "token": 0,
+          "apiKey": 0,
+          "labels": []
+        },
+        "env": {
+          "value": "AQ.Ab8RN...mgze6WVw",
+          "source": "env: GEMINI_API_KEY"
+        }
+      }
+    ],
+    "unusableProfiles": [],
+    "oauth": {
+      "warnAfterMs": 86400000,
+      "profiles": [],
+      "providers": []
+    }
+  }
+}
+
+=== 3. BASIC CHAT / INFERENCE ===
+model.run via gateway
+provider: google
+model: gemini-3.6-flash
+outputs: 1
+PASS
+aihome@AIHome:/opt/aihome-test/source$ echo
+echo '=== 4. CAPABILITY CONFIG ==='
+docker exec aihome-openclaw-test sh -lc '
+node openclaw.mjs config get tools.allow 2>/dev/null || true
+echo "---"
+node openclaw.mjs config get tools.deny 2>/dev/null || true
 '
-=== AGENTS / PROVIDER TOOL POLICY ===
-1-// AIHome OpenClaw-Test baseline hardening.
-2-// Pinned source/release: OpenClaw v2026.7.1-2 / commit 0790d9f593ad30c940ed93b5872a8cf6d6f3cf8c.
-3-// TEST: file read/write is enabled for KIRA workspace; runtime/exec remains disabled.
-4-{
-5-  gateway: {
-6-    mode: "local",
-7-    bind: "loopback",
-8-  },
-9-
-10:  agents: {
-11-    defaults: {
-12-      model: {
-13-        primary: "google/gemini-3.6-flash",
-14-        fallbacks: [],
-15-      },
-16-      skills: [],
-17:      subagents: {
-18-        maxConcurrent: 1,
-19-        runTimeoutSeconds: 300,
-20-      },
-21-    },
-22-  },
-23-
-24-  // OpenClaw v2026.7.1-2 resolves forward-compatible Gemini models by
-25-  // cloning a Google catalog template. Keep the explicit Gemini 3.6 row
-26-  // transport-complete so the resolver cannot lose Google's API/base URL
-27-  // when this configured model entry is selected.
-28-  models: {
-29-    mode: "merge",
-30-    providers: {
-31-      google: {
-32-        baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-33-        api: "google-generative-ai",
-34-        models: [
-35-          {
-36-            id: "gemini-3.6-flash",
-37-            name: "Gemini 3.6 Flash",
-38-            reasoning: true,
-39-            input: ["text", "image"],
-40-            cost: {
-41-              input: 0,
-42-              output: 0,
-43-              cacheRead: 0,
-44-              cacheWrite: 0,
-45-            },
-46-            contextWindow: 1048576,
-47-            maxTokens: 65536,
-48-          },
-49-        ],
-50-      },
-51-    },
-52-  },
-53-
-54:  tools: {
-55-    profile: "minimal",
-56-    allow: ["group:memory", "group:fs", "session_status"],
-57-    deny: [
-58-      "group:runtime",
-59-      "group:web",
-60-      "group:ui",
-61-      "group:automation",
-62-      "group:messaging",
-63-      "group:nodes",
-64-      "group:agents",
-65-      "group:media",
-66-      "group:plugins",
-67-      "sessions_spawn",
-68-      "subagents",
-69-      "cron",
-70-      "browser",
-71-      "canvas",
-72-      "exec",
-73-      "process",
-74-      "code_execution",
-75-      "gateway",
-76-      "message",
-77-    ],
-78-    codeMode: { enabled: false },
-79-    agentToAgent: { enabled: false },
-80-    elevated: { enabled: false },
-81-    loopDetection: {
-82-      enabled: true,
-83-      historySize: 30,
-84-      warningThreshold: 10,
-85-      criticalThreshold: 20,
-86-      globalCircuitBreakerThreshold: 30,
-87-      detectors: {
-88-        genericRepeat: true,
-89-        knownPollNoProgress: true,
-90-        pingPong: true,
-91-      },
-92-    },
-93-  },
-94-
-95-  // Google/Gemini is enabled as the TEST inference provider.
-96-  // File tools are enabled separately; no shell/exec capability is enabled.
-97-  plugins: {
-98-    enabled: true,
-99-    allow: ["google"],
-100-    entries: {
-101-      google: {
-102-        enabled: true,
-103-      },
-104-    },
-105-  },
-106-
-107-  // MCP/ACP bridge intentionally disabled by omission.
-108-  skills: {
-109-    load: {
-110-      extraDirs: [],
-111-      watch: false,
-112-    },
-113-    install: {
-114-      allowUploadedArchives: false,
-115-    },
-116-  },
-117-
-118-  cron: {
-119-    enabled: false,
-120-  },
-121-}
+
+echo
+echo '=== 5. MCP / BROWSER / TERMINAL / COMPUTER ==='
+docker exec aihome-openclaw-test sh -lc '
+echo "--- MCP ---"
+node openclaw.mjs config get mcp 2>/dev/null || true
+echo "--- tools ---"
+node openclaw.mjs config get tools 2>/dev/null || true
+'
+
+echo
+echo '=== 6. MEMORY ==='
+docker exec aihome-openclaw-test sh -lc '
+test -f /home/node/.openclaw/workspace/MEMORY-TEST.md &&
+cat /home/node/.openclaw/workspace/MEMORY-TEST.md
+'
+
+=== 4. CAPABILITY CONFIG ===
+[
+  "group:memory",
+  "group:fs",
+  "session_status"
+]
+---
+[
+  "group:runtime",
+  "group:web",
+  "group:ui",
+  "group:automation",
+  "group:messaging",
+  "group:nodes",
+  "group:agents",
+  "group:media",
+  "group:plugins",
+  "sessions_spawn",
+  "subagents",
+  "cron",
+  "browser",
+  "canvas",
+  "exec",
+  "process",
+  "code_execution",
+  "gateway",
+  "message",
+  "sessions_list",
+  "sessions_history",
+  "sessions_send",
+  "sessions_spawn",
+  "image",
+  "image_search"
+]
+
+=== 5. MCP / BROWSER / TERMINAL / COMPUTER ===
+--- MCP ---
+--- tools ---
+{
+  "profile": "coding",
+  "allow": [
+    "group:memory",
+    "group:fs",
+    "session_status"
+  ],
+  "deny": [
+    "group:runtime",
+    "group:web",
+    "group:ui",
+    "group:automation",
+    "group:messaging",
+    "group:nodes",
+    "group:agents",
+    "group:media",
+    "group:plugins",
+    "sessions_spawn",
+    "subagents",
+    "cron",
+    "browser",
+    "canvas",
+    "exec",
+    "process",
+    "code_execution",
+    "gateway",
+    "message",
+    "sessions_list",
+    "sessions_history",
+    "sessions_send",
+    "sessions_spawn",
+    "image",
+    "image_search"
+  ],
+  "loopDetection": {
+    "enabled": true,
+    "historySize": 30,
+    "warningThreshold": 10,
+    "criticalThreshold": 20,
+    "globalCircuitBreakerThreshold": 30,
+    "detectors": {
+      "genericRepeat": true,
+      "knownPollNoProgress": true,
+      "pingPong": true
+    }
+  },
+  "codeMode": {
+    "enabled": false
+  },
+  "agentToAgent": {
+    "enabled": false
+  },
+  "elevated": {
+    "enabled": false
+  }
+}
+
+=== 6. MEMORY ===
+AIHome Memory TEST 03 - thiết bị: AIHome-TEST-01
