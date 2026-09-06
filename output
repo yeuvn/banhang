@@ -1,33 +1,57 @@
 aihome@AIHome:/opt/aihome-test/source$ cd /opt/aihome-test/source
-git diff -- NhatKy-OpenClaw.txt config/openclaw/openclaw.json5
-diff --git a/NhatKy-OpenClaw.txt b/NhatKy-OpenClaw.txt
-index d955571..dbce537 100644
---- a/NhatKy-OpenClaw.txt
-+++ b/NhatKy-OpenClaw.txt
-@@ -53,55 +53,43 @@ VI. CAPABILITY ƯU TIÊN — CHỨC NĂNG TOOL CHI TIẾT
- 1. Chat/hội thoại
-    - Nhận yêu cầu người dùng, duy trì ngữ cảnh phiên và tạo câu trả lời qua provider/model được policy cho phép.
-    - Không tự cấp quyền thực thi hệ thống; chat chỉ được gọi các tool đã được allowlist.
--
- 2. Memory — `group:memory`
-    - Đọc memory cục bộ đã được lưu để trả lời thông tin riêng của người dùng/ngôi nhà.
-    - Ghi memory khi có yêu cầu lưu thông tin theo cơ chế memory được phê duyệt.
-    - Không được dùng memory tool để thực thi lệnh hệ điều hành, truy cập tùy ý filesystem hoặc gọi mạng.
-    - Memory read/write phải đi qua storage path đã được định nghĩa; không biến thành arbitrary filesystem access.
--
- 3. Session status — `session_status`
-    - Trả về trạng thái phiên/runtime ở phạm vi mà tool cho phép.
-    - Dùng để kiểm tra context/session health, không dùng để thực thi command, đọc file tùy ý hoặc quản trị gateway.
--
- 4. Home Assistant read — `ha_get_state` (chưa bật)
-    - Đọc trạng thái hiện tại của đúng một `entity_id` đã nằm trong allowlist.
-    - Chỉ trả về state và các attribute đã được chọn trước.
-    - Không discovery entity tùy ý; không gọi service; không sửa cấu hình; không truy cập URL tùy ý.
--
- 5. Home Assistant light/device ON — `ha_turn_on` (chưa bật)
-    - Bật đúng một entity đã được cho phép.
-    - Adapter chỉ thực hiện operation `turn_on` cố định.
-    - Không nhận `domain`, `service` hoặc `service_data` tùy ý từ model.
--
- 6. Home Assistant light/device OFF — `ha_turn_off` (chưa bật)
+
+git diff -- NhatKy-OpenClaw.txt config/openclaw/openclaw.json5 > /tmp/aihome-local.diff
+
+git diff --quiet -- NhatKy-OpenClaw.txt config/openclaw/openclaw.json5 || {
+  echo "LOCAL DIFF DETECTED"
+  git diff -- config/openclaw/openclaw.json5
+}
+
+git status --short
+LOCAL DIFF DETECTED
+diff --git a/config/openclaw/openclaw.json5 b/config/openclaw/openclaw.json5
+index 862d9f1..21435b7 100644
+--- a/config/openclaw/openclaw.json5
++++ b/config/openclaw/openclaw.json5
+@@ -1,6 +1,6 @@
+ // AIHome OpenClaw-Test baseline hardening.
+ // Pinned source/release: OpenClaw v2026.7.1-2 / commit 0790d9f593ad30c940ed93b5872a8cf6d6f3cf8c.
+-// Do not widen tools/plugins/MCP/providers without a new audit.
++// TEST: file read/write is enabled for KIRA workspace; runtime/exec remains disabled.
+ {
+   gateway: {
+     mode: "local",
+@@ -21,12 +21,41 @@
+     },
+   },
+ 
++  // OpenClaw v2026.7.1-2 resolves forward-compatible Gemini models by
++  // cloning a Google catalog template. Keep the explicit Gemini 3.6 row
++  // transport-complete so the resolver cannot lose Google's API/base URL
++  // when this configured model entry is selected.
++  models: {
++    mode: "merge",
++    providers: {
++      google: {
++        baseUrl: "https://generativelanguage.googleapis.com/v1beta",
++        api: "google-generative-ai",
++        models: [
++          {
++            id: "gemini-3.6-flash",
++            name: "Gemini 3.6 Flash",
++            reasoning: true,
++            input: ["text", "image"],
++            cost: {
++              input: 0,
++              output: 0,
++              cacheRead: 0,
++              cacheWrite: 0,
++            },
++            contextWindow: 1048576,
++            maxTokens: 65536,
++          },
++        ],
++      },
++    },
++  },
 :
