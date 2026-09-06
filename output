@@ -1,90 +1,606 @@
 aihome@AIHome:~/actions-runner$ docker exec aihome-openclaw-test sh -lc '
-grep -R -n -A140 -B30 \
-  "function createOpenClawModelRegistry\|const createOpenClawModelRegistry\|createOpenClawModelRegistry =" \
+grep -R -n -A180 -B30 \
+  "ModelRegistry.create\|class ModelRegistry\|ModelRegistry =" \
   /app/dist \
-  2>/dev/null | head -400
+  2>/dev/null | head -600
 '
-/app/dist/agent-model-discovery-BuQHUPIv.js-143-//#region src/agents/agent-model-discovery.ts
-/app/dist/agent-model-discovery-BuQHUPIv.js-144-/** Discovers agent models and auth storage with provider/plugin normalization hooks. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-145-/** Applies plugin model normalization and transport hooks to discovered agent models. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-146-function normalizeDiscoveredAgentModel(value, agentDir) {
-/app/dist/agent-model-discovery-BuQHUPIv.js-147-	if (!isRecord(value)) return value;
-/app/dist/agent-model-discovery-BuQHUPIv.js-148-	if (typeof value.id !== "string" || typeof value.name !== "string" || typeof value.provider !== "string") return value;
-/app/dist/agent-model-discovery-BuQHUPIv.js-149-	const model = value;
-/app/dist/agent-model-discovery-BuQHUPIv.js-150-	const pluginNormalized = normalizeProviderResolvedModelWithPlugin({
-/app/dist/agent-model-discovery-BuQHUPIv.js-151-		provider: model.provider,
-/app/dist/agent-model-discovery-BuQHUPIv.js-152-		modelId: model.id,
-/app/dist/agent-model-discovery-BuQHUPIv.js-153-		context: {
-/app/dist/agent-model-discovery-BuQHUPIv.js-154-			provider: model.provider,
-/app/dist/agent-model-discovery-BuQHUPIv.js-155-			modelId: model.id,
-/app/dist/agent-model-discovery-BuQHUPIv.js-156-			model,
-/app/dist/agent-model-discovery-BuQHUPIv.js-157-			agentDir
-/app/dist/agent-model-discovery-BuQHUPIv.js-158-		}
-/app/dist/agent-model-discovery-BuQHUPIv.js-159-	}) ?? model;
-/app/dist/agent-model-discovery-BuQHUPIv.js-160-	const transportNormalized = applyProviderResolvedTransportWithPlugin({
-/app/dist/agent-model-discovery-BuQHUPIv.js-161-		provider: model.provider,
-/app/dist/agent-model-discovery-BuQHUPIv.js-162-		modelId: model.id,
-/app/dist/agent-model-discovery-BuQHUPIv.js-163-		context: {
-/app/dist/agent-model-discovery-BuQHUPIv.js-164-			provider: model.provider,
-/app/dist/agent-model-discovery-BuQHUPIv.js-165-			modelId: model.id,
-/app/dist/agent-model-discovery-BuQHUPIv.js-166-			model: pluginNormalized,
-/app/dist/agent-model-discovery-BuQHUPIv.js-167-			agentDir
-/app/dist/agent-model-discovery-BuQHUPIv.js-168-		}
-/app/dist/agent-model-discovery-BuQHUPIv.js-169-	}) ?? pluginNormalized;
-/app/dist/agent-model-discovery-BuQHUPIv.js-170-	if (!isRecord(transportNormalized) || typeof transportNormalized.id !== "string" || typeof transportNormalized.name !== "string" || typeof transportNormalized.provider !== "string" || typeof transportNormalized.api !== "string") return value;
-/app/dist/agent-model-discovery-BuQHUPIv.js-171-	return normalizeModelCompat(transportNormalized);
-/app/dist/agent-model-discovery-BuQHUPIv.js-172-}
-/app/dist/agent-model-discovery-BuQHUPIv.js:173:function createOpenClawModelRegistry(authStorage, modelsJsonPath, agentDir, options) {
-/app/dist/agent-model-discovery-BuQHUPIv.js-174-	const pluginMetadataSnapshot = resolveModelPluginMetadataSnapshot({
-/app/dist/agent-model-discovery-BuQHUPIv.js-175-		...options?.config ? { config: options.config } : {},
-/app/dist/agent-model-discovery-BuQHUPIv.js-176-		...options?.pluginMetadataSnapshot ? { pluginMetadataSnapshot: options.pluginMetadataSnapshot } : {},
-/app/dist/agent-model-discovery-BuQHUPIv.js-177-		...options?.workspaceDir ? { workspaceDir: options.workspaceDir } : {},
-/app/dist/agent-model-discovery-BuQHUPIv.js-178-		allowWorkspaceScopedCurrent: options?.workspaceDir === void 0,
-/app/dist/agent-model-discovery-BuQHUPIv.js-179-		useRuntimeConfig: options?.config === void 0
-/app/dist/agent-model-discovery-BuQHUPIv.js-180-	});
-/app/dist/agent-model-discovery-BuQHUPIv.js-181-	const registryOptions = pluginMetadataSnapshot ? { pluginMetadataSnapshot } : {};
-/app/dist/agent-model-discovery-BuQHUPIv.js-182-	const registry = ModelRegistry.create(authStorage, modelsJsonPath, registryOptions);
-/app/dist/agent-model-discovery-BuQHUPIv.js-183-	const getAll = registry.getAll.bind(registry);
-/app/dist/agent-model-discovery-BuQHUPIv.js-184-	const getAvailable = registry.getAvailable.bind(registry);
-/app/dist/agent-model-discovery-BuQHUPIv.js-185-	const find = registry.find.bind(registry);
-/app/dist/agent-model-discovery-BuQHUPIv.js-186-	const refresh = registry.refresh.bind(registry);
-/app/dist/agent-model-discovery-BuQHUPIv.js-187-	const providerFilter = options?.providerFilter ? normalizeProviderId(options.providerFilter) : "";
-/app/dist/agent-model-discovery-BuQHUPIv.js-188-	const matchesProviderFilter = (entry) => !providerFilter || normalizeProviderId(entry.provider) === providerFilter;
-/app/dist/agent-model-discovery-BuQHUPIv.js-189-	const shouldNormalize = options?.normalizeModels !== false;
-/app/dist/agent-model-discovery-BuQHUPIv.js-190-	const findCache = /* @__PURE__ */ new Map();
-/app/dist/agent-model-discovery-BuQHUPIv.js-191-	const normalizeEntry = (entry) => shouldNormalize ? normalizeDiscoveredAgentModel(entry, agentDir) : entry;
-/app/dist/agent-model-discovery-BuQHUPIv.js-192-	registry.getAll = () => {
-/app/dist/agent-model-discovery-BuQHUPIv.js-193-		const entries = getAll().filter((entry) => matchesProviderFilter(entry));
-/app/dist/agent-model-discovery-BuQHUPIv.js-194-		return shouldNormalize ? entries.map((entry) => normalizeDiscoveredAgentModel(entry, agentDir)) : entries;
-/app/dist/agent-model-discovery-BuQHUPIv.js-195-	};
-/app/dist/agent-model-discovery-BuQHUPIv.js-196-	registry.getAvailable = () => {
-/app/dist/agent-model-discovery-BuQHUPIv.js-197-		const entries = getAvailable().filter((entry) => matchesProviderFilter(entry));
-/app/dist/agent-model-discovery-BuQHUPIv.js-198-		return shouldNormalize ? entries.map((entry) => normalizeDiscoveredAgentModel(entry, agentDir)) : entries;
-/app/dist/agent-model-discovery-BuQHUPIv.js-199-	};
-/app/dist/agent-model-discovery-BuQHUPIv.js-200-	registry.find = (provider, modelId) => {
-/app/dist/agent-model-discovery-BuQHUPIv.js-201-		const key = `${normalizeProviderId(provider)}\0${modelId}`;
-/app/dist/agent-model-discovery-BuQHUPIv.js-202-		if (findCache.has(key)) return findCache.get(key);
-/app/dist/agent-model-discovery-BuQHUPIv.js-203-		const fallbackEntry = find(provider, modelId);
-/app/dist/agent-model-discovery-BuQHUPIv.js-204-		const resolved = fallbackEntry ? normalizeEntry(fallbackEntry) : void 0;
-/app/dist/agent-model-discovery-BuQHUPIv.js-205-		findCache.set(key, resolved);
-/app/dist/agent-model-discovery-BuQHUPIv.js-206-		return resolved;
-/app/dist/agent-model-discovery-BuQHUPIv.js-207-	};
-/app/dist/agent-model-discovery-BuQHUPIv.js-208-	registry.refresh = () => {
-/app/dist/agent-model-discovery-BuQHUPIv.js-209-		findCache.clear();
-/app/dist/agent-model-discovery-BuQHUPIv.js-210-		return refresh();
-/app/dist/agent-model-discovery-BuQHUPIv.js-211-	};
-/app/dist/agent-model-discovery-BuQHUPIv.js-212-	return registry;
-/app/dist/agent-model-discovery-BuQHUPIv.js-213-}
-/app/dist/agent-model-discovery-BuQHUPIv.js-214-/** Creates auth storage for model discovery from stored and env-backed credentials. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-215-/** Builds auth storage for model discovery without prompting for secrets. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-216-function discoverAuthStorage(agentDir, options) {
-/app/dist/agent-model-discovery-BuQHUPIv.js-217-	const credentials = options?.skipCredentials === true ? {} : resolveAgentCredentialsForDiscovery(agentDir, options);
-/app/dist/agent-model-discovery-BuQHUPIv.js-218-	return AuthStorage.inMemory(credentials);
-/app/dist/agent-model-discovery-BuQHUPIv.js-219-}
-/app/dist/agent-model-discovery-BuQHUPIv.js-220-/** Creates the model registry used by agent model discovery. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-221-/** Creates a model registry for one agent directory, optionally filtered and plugin-normalized. */
-/app/dist/agent-model-discovery-BuQHUPIv.js-222-function discoverModels(authStorage, agentDir, options) {
-/app/dist/agent-model-discovery-BuQHUPIv.js-223-	return createOpenClawModelRegistry(authStorage, path.join(agentDir, "models.json"), agentDir, options);
-/app/dist/agent-model-discovery-BuQHUPIv.js-224-}
-/app/dist/agent-model-discovery-BuQHUPIv.js-225-//#endregion
-/app/dist/agent-model-discovery-BuQHUPIv.js-226-export { addEnvBackedAgentCredentials as a, resolveAgentCredentialsForDiscovery as i, discoverModels as n, normalizeDiscoveredAgentModel as r, discoverAuthStorage as t };
+/app/dist/model-wpoKGSDF.js-148-/**
+/app/dist/model-wpoKGSDF.js-149-* Resolves embedded-agent provider/model selections from config, registry, and catalogs.
+/app/dist/model-wpoKGSDF.js-150-*/
+/app/dist/model-wpoKGSDF.js-151-const TARGET_PROVIDER_RUNTIME_HOOKS = {
+/app/dist/model-wpoKGSDF.js-152-	buildProviderUnknownModelHintWithPlugin,
+/app/dist/model-wpoKGSDF.js-153-	prepareProviderDynamicModel,
+/app/dist/model-wpoKGSDF.js-154-	runProviderDynamicModel,
+/app/dist/model-wpoKGSDF.js-155-	shouldPreferProviderRuntimeResolvedModel,
+/app/dist/model-wpoKGSDF.js-156-	normalizeProviderResolvedModelWithPlugin,
+/app/dist/model-wpoKGSDF.js-157-	applyProviderResolvedTransportWithPlugin: () => void 0,
+/app/dist/model-wpoKGSDF.js-158-	normalizeProviderTransportWithPlugin: () => void 0
+/app/dist/model-wpoKGSDF.js-159-};
+/app/dist/model-wpoKGSDF.js-160-const DEFAULT_PROVIDER_RUNTIME_HOOKS = {
+/app/dist/model-wpoKGSDF.js-161-	...TARGET_PROVIDER_RUNTIME_HOOKS,
+/app/dist/model-wpoKGSDF.js-162-	applyProviderResolvedTransportWithPlugin,
+/app/dist/model-wpoKGSDF.js-163-	normalizeProviderTransportWithPlugin
+/app/dist/model-wpoKGSDF.js-164-};
+/app/dist/model-wpoKGSDF.js-165-const STATIC_PROVIDER_RUNTIME_HOOKS = {
+/app/dist/model-wpoKGSDF.js-166-	applyProviderResolvedTransportWithPlugin: () => void 0,
+/app/dist/model-wpoKGSDF.js-167-	buildProviderUnknownModelHintWithPlugin: () => void 0,
+/app/dist/model-wpoKGSDF.js-168-	prepareProviderDynamicModel: async () => {},
+/app/dist/model-wpoKGSDF.js-169-	runProviderDynamicModel: () => void 0,
+/app/dist/model-wpoKGSDF.js-170-	normalizeProviderResolvedModelWithPlugin: () => void 0,
+/app/dist/model-wpoKGSDF.js-171-	normalizeProviderTransportWithPlugin: () => void 0
+/app/dist/model-wpoKGSDF.js-172-};
+/app/dist/model-wpoKGSDF.js-173-const SKIP_AGENT_DISCOVERY_PROVIDER_RUNTIME_HOOKS = { ...TARGET_PROVIDER_RUNTIME_HOOKS };
+/app/dist/model-wpoKGSDF.js-174-function createEmptyAgentDiscoveryStores() {
+/app/dist/model-wpoKGSDF.js-175-	const authStorage = typeof AuthStorage.inMemory === "function" ? AuthStorage.inMemory({}) : AuthStorage.create();
+/app/dist/model-wpoKGSDF.js-176-	return {
+/app/dist/model-wpoKGSDF.js-177-		authStorage,
+/app/dist/model-wpoKGSDF.js:178:		modelRegistry: typeof ModelRegistry.inMemory === "function" ? ModelRegistry.inMemory(authStorage) : ModelRegistry.create(authStorage)
+/app/dist/model-wpoKGSDF.js-179-	};
+/app/dist/model-wpoKGSDF.js-180-}
+/app/dist/model-wpoKGSDF.js-181-function resolveRuntimeHooks(params) {
+/app/dist/model-wpoKGSDF.js-182-	if (params?.skipProviderRuntimeHooks) return STATIC_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-183-	if (params?.runtimeHooks) return params.runtimeHooks;
+/app/dist/model-wpoKGSDF.js-184-	if (params?.skipAgentDiscovery) return SKIP_AGENT_DISCOVERY_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-185-	return DEFAULT_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-186-}
+/app/dist/model-wpoKGSDF.js-187-function discoverCachedAgentStoresForAgent(resolvedAgentDir, cfg, workspaceDir) {
+/app/dist/model-wpoKGSDF.js-188-	return discoverCachedAgentStores({
+/app/dist/model-wpoKGSDF.js-189-		agentDir: resolvedAgentDir,
+/app/dist/model-wpoKGSDF.js-190-		...cfg ? { config: cfg } : {},
+/app/dist/model-wpoKGSDF.js-191-		inheritedAuthDir: resolveDefaultAgentDir(cfg ?? {}),
+/app/dist/model-wpoKGSDF.js-192-		...workspaceDir ? { workspaceDir } : {}
+/app/dist/model-wpoKGSDF.js-193-	});
+/app/dist/model-wpoKGSDF.js-194-}
+/app/dist/model-wpoKGSDF.js-195-function canonicalizeLegacyResolvedModel(params) {
+/app/dist/model-wpoKGSDF.js-196-	if (normalizeProviderId(params.provider) !== "openai" || params.model.id.trim().toLowerCase() !== "gpt-5.4-codex") return params.model;
+/app/dist/model-wpoKGSDF.js-197-	return {
+/app/dist/model-wpoKGSDF.js-198-		...params.model,
+/app/dist/model-wpoKGSDF.js-199-		id: "gpt-5.4",
+/app/dist/model-wpoKGSDF.js-200-		name: params.model.name.trim().toLowerCase() === "gpt-5.4-codex" ? "gpt-5.4" : params.model.name
+/app/dist/model-wpoKGSDF.js-201-	};
+/app/dist/model-wpoKGSDF.js-202-}
+/app/dist/model-wpoKGSDF.js-203-function applyResolvedTransportFallback(params) {
+/app/dist/model-wpoKGSDF.js-204-	const normalized = params.runtimeHooks.normalizeProviderTransportWithPlugin({
+/app/dist/model-wpoKGSDF.js-205-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-206-		config: params.cfg,
+/app/dist/model-wpoKGSDF.js-207-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-208-		modelId: params.model.id,
+/app/dist/model-wpoKGSDF.js-209-		context: {
+/app/dist/model-wpoKGSDF.js-210-			config: params.cfg,
+/app/dist/model-wpoKGSDF.js-211-			workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-212-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-213-			modelId: params.model.id,
+/app/dist/model-wpoKGSDF.js-214-			api: params.model.api,
+/app/dist/model-wpoKGSDF.js-215-			baseUrl: params.model.baseUrl
+/app/dist/model-wpoKGSDF.js-216-		}
+/app/dist/model-wpoKGSDF.js-217-	});
+/app/dist/model-wpoKGSDF.js-218-	if (!normalized) return;
+/app/dist/model-wpoKGSDF.js-219-	const nextApi = normalizeResolvedTransportApi(normalized.api) ?? params.model.api;
+/app/dist/model-wpoKGSDF.js-220-	const nextBaseUrl = normalized.baseUrl ?? params.model.baseUrl;
+/app/dist/model-wpoKGSDF.js-221-	if (nextApi === params.model.api && nextBaseUrl === params.model.baseUrl) return;
+/app/dist/model-wpoKGSDF.js-222-	return {
+/app/dist/model-wpoKGSDF.js-223-		...params.model,
+/app/dist/model-wpoKGSDF.js-224-		api: nextApi,
+/app/dist/model-wpoKGSDF.js-225-		baseUrl: nextBaseUrl
+/app/dist/model-wpoKGSDF.js-226-	};
+/app/dist/model-wpoKGSDF.js-227-}
+/app/dist/model-wpoKGSDF.js-228-function normalizeResolvedModel(params) {
+/app/dist/model-wpoKGSDF.js-229-	const normalizeModelCost = (cost) => {
+/app/dist/model-wpoKGSDF.js-230-		if (!cost || typeof cost !== "object" || Array.isArray(cost)) return {
+/app/dist/model-wpoKGSDF.js-231-			input: 0,
+/app/dist/model-wpoKGSDF.js-232-			output: 0,
+/app/dist/model-wpoKGSDF.js-233-			cacheRead: 0,
+/app/dist/model-wpoKGSDF.js-234-			cacheWrite: 0
+/app/dist/model-wpoKGSDF.js-235-		};
+/app/dist/model-wpoKGSDF.js-236-		const record = cost;
+/app/dist/model-wpoKGSDF.js-237-		const input = typeof record.input === "number" && Number.isFinite(record.input) ? record.input : 0;
+/app/dist/model-wpoKGSDF.js-238-		const output = typeof record.output === "number" && Number.isFinite(record.output) ? record.output : 0;
+/app/dist/model-wpoKGSDF.js-239-		const cacheRead = typeof record.cacheRead === "number" && Number.isFinite(record.cacheRead) ? record.cacheRead : 0;
+/app/dist/model-wpoKGSDF.js-240-		const cacheWrite = typeof record.cacheWrite === "number" && Number.isFinite(record.cacheWrite) ? record.cacheWrite : 0;
+/app/dist/model-wpoKGSDF.js-241-		if (input === record.input && output === record.output && cacheRead === record.cacheRead && cacheWrite === record.cacheWrite) return record;
+/app/dist/model-wpoKGSDF.js-242-		return {
+/app/dist/model-wpoKGSDF.js-243-			...cost,
+/app/dist/model-wpoKGSDF.js-244-			input,
+/app/dist/model-wpoKGSDF.js-245-			output,
+/app/dist/model-wpoKGSDF.js-246-			cacheRead,
+/app/dist/model-wpoKGSDF.js-247-			cacheWrite
+/app/dist/model-wpoKGSDF.js-248-		};
+/app/dist/model-wpoKGSDF.js-249-	};
+/app/dist/model-wpoKGSDF.js-250-	const normalizedInputModel = {
+/app/dist/model-wpoKGSDF.js-251-		...params.model,
+/app/dist/model-wpoKGSDF.js-252-		input: resolveProviderModelInput({
+/app/dist/model-wpoKGSDF.js-253-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-254-			modelId: params.model.id,
+/app/dist/model-wpoKGSDF.js-255-			modelName: params.model.name,
+/app/dist/model-wpoKGSDF.js-256-			input: params.model.input
+/app/dist/model-wpoKGSDF.js-257-		}),
+/app/dist/model-wpoKGSDF.js-258-		cost: normalizeModelCost(params.model.cost)
+/app/dist/model-wpoKGSDF.js-259-	};
+/app/dist/model-wpoKGSDF.js-260-	const runtimeHooks = params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS;
+/app/dist/model-wpoKGSDF.js-261-	const pluginNormalized = runtimeHooks.normalizeProviderResolvedModelWithPlugin({
+/app/dist/model-wpoKGSDF.js-262-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-263-		config: params.cfg,
+/app/dist/model-wpoKGSDF.js-264-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-265-		context: {
+/app/dist/model-wpoKGSDF.js-266-			config: params.cfg,
+/app/dist/model-wpoKGSDF.js-267-			agentDir: params.agentDir,
+/app/dist/model-wpoKGSDF.js-268-			workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-269-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-270-			modelId: normalizedInputModel.id,
+/app/dist/model-wpoKGSDF.js-271-			model: normalizedInputModel
+/app/dist/model-wpoKGSDF.js-272-		}
+/app/dist/model-wpoKGSDF.js-273-	});
+/app/dist/model-wpoKGSDF.js-274-	const fallbackTransportNormalized = runtimeHooks.applyProviderResolvedTransportWithPlugin?.({
+/app/dist/model-wpoKGSDF.js-275-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-276-		config: params.cfg,
+/app/dist/model-wpoKGSDF.js-277-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-278-		context: {
+/app/dist/model-wpoKGSDF.js-279-			config: params.cfg,
+/app/dist/model-wpoKGSDF.js-280-			agentDir: params.agentDir,
+/app/dist/model-wpoKGSDF.js-281-			workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-282-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-283-			modelId: normalizedInputModel.id,
+/app/dist/model-wpoKGSDF.js-284-			model: pluginNormalized ?? normalizedInputModel
+/app/dist/model-wpoKGSDF.js-285-		}
+/app/dist/model-wpoKGSDF.js-286-	}) ?? applyResolvedTransportFallback({
+/app/dist/model-wpoKGSDF.js-287-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-288-		cfg: params.cfg,
+/app/dist/model-wpoKGSDF.js-289-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-290-		runtimeHooks,
+/app/dist/model-wpoKGSDF.js-291-		model: pluginNormalized ?? normalizedInputModel
+/app/dist/model-wpoKGSDF.js-292-	});
+/app/dist/model-wpoKGSDF.js-293-	return canonicalizeLegacyResolvedModel({
+/app/dist/model-wpoKGSDF.js-294-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-295-		model: normalizeResolvedProviderModel({
+/app/dist/model-wpoKGSDF.js-296-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-297-			model: fallbackTransportNormalized ?? pluginNormalized ?? normalizedInputModel
+/app/dist/model-wpoKGSDF.js-298-		})
+/app/dist/model-wpoKGSDF.js-299-	});
+/app/dist/model-wpoKGSDF.js-300-}
+/app/dist/model-wpoKGSDF.js-301-function resolveProviderTransport(params) {
+/app/dist/model-wpoKGSDF.js-302-	const normalized = (params.runtimeHooks ?? DEFAULT_PROVIDER_RUNTIME_HOOKS).normalizeProviderTransportWithPlugin({
+/app/dist/model-wpoKGSDF.js-303-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-304-		...params.modelId ? { modelId: params.modelId } : {},
+/app/dist/model-wpoKGSDF.js-305-		config: params.cfg,
+/app/dist/model-wpoKGSDF.js-306-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-307-		context: {
+/app/dist/model-wpoKGSDF.js-308-			config: params.cfg,
+/app/dist/model-wpoKGSDF.js-309-			workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-310-			provider: params.provider,
+/app/dist/model-wpoKGSDF.js-311-			...params.modelId ? { modelId: params.modelId } : {},
+/app/dist/model-wpoKGSDF.js-312-			api: params.api,
+/app/dist/model-wpoKGSDF.js-313-			baseUrl: params.baseUrl
+/app/dist/model-wpoKGSDF.js-314-		}
+/app/dist/model-wpoKGSDF.js-315-	});
+/app/dist/model-wpoKGSDF.js-316-	return {
+/app/dist/model-wpoKGSDF.js-317-		api: normalizeResolvedTransportApi(normalized?.api ?? params.api),
+/app/dist/model-wpoKGSDF.js-318-		baseUrl: normalized?.baseUrl ?? params.baseUrl
+/app/dist/model-wpoKGSDF.js-319-	};
+/app/dist/model-wpoKGSDF.js-320-}
+/app/dist/model-wpoKGSDF.js-321-function resolveConfiguredProviderDefaultApi(params) {
+/app/dist/model-wpoKGSDF.js-322-	const { providerConfig } = params;
+/app/dist/model-wpoKGSDF.js-323-	const explicit = normalizeResolvedTransportApi(providerConfig?.api);
+/app/dist/model-wpoKGSDF.js-324-	if (explicit) return explicit;
+/app/dist/model-wpoKGSDF.js-325-	const providerConfiguredBaseUrl = normalizeTransportBaseUrl(providerConfig?.baseUrl);
+/app/dist/model-wpoKGSDF.js-326-	if (!providerConfiguredBaseUrl) return;
+/app/dist/model-wpoKGSDF.js-327-	return resolveProviderTransport({
+/app/dist/model-wpoKGSDF.js-328-		provider: params.provider,
+/app/dist/model-wpoKGSDF.js-329-		api: void 0,
+/app/dist/model-wpoKGSDF.js-330-		baseUrl: providerConfiguredBaseUrl,
+/app/dist/model-wpoKGSDF.js-331-		cfg: params.cfg,
+/app/dist/model-wpoKGSDF.js-332-		workspaceDir: params.workspaceDir,
+/app/dist/model-wpoKGSDF.js-333-		runtimeHooks: params.runtimeHooks
+/app/dist/model-wpoKGSDF.js-334-	}).api ?? "openai-completions";
+/app/dist/model-wpoKGSDF.js-335-}
+/app/dist/model-wpoKGSDF.js-336-function normalizeTransportBaseUrl(baseUrl) {
+/app/dist/model-wpoKGSDF.js-337-	if (typeof baseUrl !== "string") return;
+/app/dist/model-wpoKGSDF.js-338-	const trimmed = baseUrl.trim();
+/app/dist/model-wpoKGSDF.js-339-	return trimmed ? trimmed : void 0;
+/app/dist/model-wpoKGSDF.js-340-}
+/app/dist/model-wpoKGSDF.js-341-function resolveProviderRequestTimeoutMs(timeoutSeconds) {
+/app/dist/model-wpoKGSDF.js-342-	return finiteSecondsToTimerSafeMilliseconds(timeoutSeconds, { floorSeconds: true });
+/app/dist/model-wpoKGSDF.js-343-}
+/app/dist/model-wpoKGSDF.js-344-function mergeModelMediaInput(base, override) {
+/app/dist/model-wpoKGSDF.js-345-	if (!base) return override;
+/app/dist/model-wpoKGSDF.js-346-	if (!override) return base;
+/app/dist/model-wpoKGSDF.js-347-	return {
+/app/dist/model-wpoKGSDF.js-348-		...base,
+/app/dist/model-wpoKGSDF.js-349-		...override,
+/app/dist/model-wpoKGSDF.js-350-		image: base.image || override.image ? {
+/app/dist/model-wpoKGSDF.js-351-			...base.image,
+/app/dist/model-wpoKGSDF.js-352-			...override.image
+/app/dist/model-wpoKGSDF.js-353-		} : void 0
+/app/dist/model-wpoKGSDF.js-354-	};
+/app/dist/model-wpoKGSDF.js-355-}
+/app/dist/model-wpoKGSDF.js-356-function matchesProviderScopedModelId(params) {
+/app/dist/model-wpoKGSDF.js-357-	const { candidateId, provider, modelId } = params;
+/app/dist/model-wpoKGSDF.js-358-	if (candidateId === modelId) return true;
+--
+/app/dist/sessions-D8qGY7uC.js-1282-		models: [],
+/app/dist/sessions-D8qGY7uC.js-1283-		error
+/app/dist/sessions-D8qGY7uC.js-1284-	};
+/app/dist/sessions-D8qGY7uC.js-1285-}
+/app/dist/sessions-D8qGY7uC.js-1286-function mergeCompat(baseCompat, overrideCompat) {
+/app/dist/sessions-D8qGY7uC.js-1287-	if (!overrideCompat) return baseCompat;
+/app/dist/sessions-D8qGY7uC.js-1288-	const base = baseCompat;
+/app/dist/sessions-D8qGY7uC.js-1289-	const override = overrideCompat;
+/app/dist/sessions-D8qGY7uC.js-1290-	const merged = {
+/app/dist/sessions-D8qGY7uC.js-1291-		...base,
+/app/dist/sessions-D8qGY7uC.js-1292-		...override
+/app/dist/sessions-D8qGY7uC.js-1293-	};
+/app/dist/sessions-D8qGY7uC.js-1294-	const baseCompletions = base;
+/app/dist/sessions-D8qGY7uC.js-1295-	const overrideCompletions = override;
+/app/dist/sessions-D8qGY7uC.js-1296-	const mergedCompletions = merged;
+/app/dist/sessions-D8qGY7uC.js-1297-	if (baseCompletions?.openRouterRouting || overrideCompletions.openRouterRouting) mergedCompletions.openRouterRouting = {
+/app/dist/sessions-D8qGY7uC.js-1298-		...baseCompletions?.openRouterRouting,
+/app/dist/sessions-D8qGY7uC.js-1299-		...overrideCompletions.openRouterRouting
+/app/dist/sessions-D8qGY7uC.js-1300-	};
+/app/dist/sessions-D8qGY7uC.js-1301-	if (baseCompletions?.vercelGatewayRouting || overrideCompletions.vercelGatewayRouting) mergedCompletions.vercelGatewayRouting = {
+/app/dist/sessions-D8qGY7uC.js-1302-		...baseCompletions?.vercelGatewayRouting,
+/app/dist/sessions-D8qGY7uC.js-1303-		...overrideCompletions.vercelGatewayRouting
+/app/dist/sessions-D8qGY7uC.js-1304-	};
+/app/dist/sessions-D8qGY7uC.js-1305-	return merged;
+/app/dist/sessions-D8qGY7uC.js-1306-}
+/app/dist/sessions-D8qGY7uC.js-1307-/** Clear the config value command cache. Exported for testing. */
+/app/dist/sessions-D8qGY7uC.js-1308-const clearApiKeyCache = clearConfigValueCache;
+/app/dist/sessions-D8qGY7uC.js-1309-/**
+/app/dist/sessions-D8qGY7uC.js-1310-* Model registry - loads and manages models, resolves API keys via AuthStorage.
+/app/dist/sessions-D8qGY7uC.js-1311-*/
+/app/dist/sessions-D8qGY7uC.js:1312:var ModelRegistry = class ModelRegistry {
+/app/dist/sessions-D8qGY7uC.js-1313-	constructor(authStorage, modelsJsonPath, options = {}) {
+/app/dist/sessions-D8qGY7uC.js-1314-		this.models = [];
+/app/dist/sessions-D8qGY7uC.js-1315-		this.providerRequestConfigs = /* @__PURE__ */ new Map();
+/app/dist/sessions-D8qGY7uC.js-1316-		this.modelRequestHeaders = /* @__PURE__ */ new Map();
+/app/dist/sessions-D8qGY7uC.js-1317-		this.registeredProviders = /* @__PURE__ */ new Map();
+/app/dist/sessions-D8qGY7uC.js-1318-		this.loadError = void 0;
+/app/dist/sessions-D8qGY7uC.js-1319-		this.authStorage = authStorage;
+/app/dist/sessions-D8qGY7uC.js-1320-		this.modelsJsonPath = modelsJsonPath;
+/app/dist/sessions-D8qGY7uC.js-1321-		this.pluginMetadataSnapshot = resolveModelPluginMetadataSnapshot({
+/app/dist/sessions-D8qGY7uC.js-1322-			...options.pluginMetadataSnapshot ? { pluginMetadataSnapshot: options.pluginMetadataSnapshot } : {},
+/app/dist/sessions-D8qGY7uC.js-1323-			...options.workspaceDir ? { workspaceDir: options.workspaceDir } : {},
+/app/dist/sessions-D8qGY7uC.js-1324-			allowWorkspaceScopedCurrent: true,
+/app/dist/sessions-D8qGY7uC.js-1325-			useRuntimeConfig: true
+/app/dist/sessions-D8qGY7uC.js-1326-		});
+/app/dist/sessions-D8qGY7uC.js-1327-		this.loadModels();
+/app/dist/sessions-D8qGY7uC.js-1328-	}
+/app/dist/sessions-D8qGY7uC.js-1329-	static create(authStorage, modelsJsonPath = join(getAgentDir(), "models.json"), options = {}) {
+/app/dist/sessions-D8qGY7uC.js-1330-		return new ModelRegistry(authStorage, modelsJsonPath, options);
+/app/dist/sessions-D8qGY7uC.js-1331-	}
+/app/dist/sessions-D8qGY7uC.js-1332-	static inMemory(authStorage) {
+/app/dist/sessions-D8qGY7uC.js-1333-		return new ModelRegistry(authStorage, void 0);
+/app/dist/sessions-D8qGY7uC.js-1334-	}
+/app/dist/sessions-D8qGY7uC.js-1335-	/**
+/app/dist/sessions-D8qGY7uC.js-1336-	* Reload models from disk (models.json).
+/app/dist/sessions-D8qGY7uC.js-1337-	*/
+/app/dist/sessions-D8qGY7uC.js-1338-	refresh() {
+/app/dist/sessions-D8qGY7uC.js-1339-		this.providerRequestConfigs.clear();
+/app/dist/sessions-D8qGY7uC.js-1340-		this.modelRequestHeaders.clear();
+/app/dist/sessions-D8qGY7uC.js-1341-		this.loadError = void 0;
+/app/dist/sessions-D8qGY7uC.js-1342-		resetApiProviders(defaultApiRegistry);
+/app/dist/sessions-D8qGY7uC.js-1343-		resetOAuthProviders();
+/app/dist/sessions-D8qGY7uC.js-1344-		this.loadModels();
+/app/dist/sessions-D8qGY7uC.js-1345-		for (const [providerName, config] of this.registeredProviders.entries()) this.applyProviderConfig(providerName, config);
+/app/dist/sessions-D8qGY7uC.js-1346-	}
+/app/dist/sessions-D8qGY7uC.js-1347-	/** Get any root or generated plugin catalog load error. */
+/app/dist/sessions-D8qGY7uC.js-1348-	getError() {
+/app/dist/sessions-D8qGY7uC.js-1349-		return this.loadError;
+/app/dist/sessions-D8qGY7uC.js-1350-	}
+/app/dist/sessions-D8qGY7uC.js-1351-	loadModels() {
+/app/dist/sessions-D8qGY7uC.js-1352-		const { models: customModels, error } = this.modelsJsonPath ? this.loadCustomModels(this.modelsJsonPath) : emptyCustomModelsResult();
+/app/dist/sessions-D8qGY7uC.js-1353-		if (error) {
+/app/dist/sessions-D8qGY7uC.js-1354-			this.loadError = error;
+/app/dist/sessions-D8qGY7uC.js-1355-			log.warn(`model catalog load issue: ${error}`);
+/app/dist/sessions-D8qGY7uC.js-1356-		}
+/app/dist/sessions-D8qGY7uC.js-1357-		let combined = customModels;
+/app/dist/sessions-D8qGY7uC.js-1358-		for (const oauthProvider of this.authStorage.getOAuthProviders()) {
+/app/dist/sessions-D8qGY7uC.js-1359-			const cred = this.authStorage.get(oauthProvider.id);
+/app/dist/sessions-D8qGY7uC.js-1360-			if (cred?.type === "oauth" && oauthProvider.modifyModels) combined = oauthProvider.modifyModels(combined, cred);
+/app/dist/sessions-D8qGY7uC.js-1361-		}
+/app/dist/sessions-D8qGY7uC.js-1362-		this.models = combined;
+/app/dist/sessions-D8qGY7uC.js-1363-	}
+/app/dist/sessions-D8qGY7uC.js-1364-	loadCustomModels(modelsJsonPath, options = { includePluginCatalogs: true }) {
+/app/dist/sessions-D8qGY7uC.js-1365-		if (!existsSync(modelsJsonPath)) return emptyCustomModelsResult();
+/app/dist/sessions-D8qGY7uC.js-1366-		try {
+/app/dist/sessions-D8qGY7uC.js-1367-			const content = readFileSync(modelsJsonPath, "utf-8");
+/app/dist/sessions-D8qGY7uC.js-1368-			const parsed = JSON.parse(stripJsonComments(content));
+/app/dist/sessions-D8qGY7uC.js-1369-			if (options.requireGeneratedCatalog === true && !isGeneratedPluginModelCatalog(parsed)) return emptyCustomModelsResult();
+/app/dist/sessions-D8qGY7uC.js-1370-			if (!validateModelsConfig.Check(parsed)) return emptyCustomModelsResult(`Invalid models.json schema:\n${validateModelsConfig.Errors(parsed).map((error) => `  - ${formatValidationPath(error)}: ${error.message}`).join("\n") || "Unknown schema error"}\n\nFile: ${modelsJsonPath}`);
+/app/dist/sessions-D8qGY7uC.js-1371-			const config = parsed;
+/app/dist/sessions-D8qGY7uC.js-1372-			const providers = options.requireGeneratedCatalog === true ? filterGeneratedPluginModelCatalogProviders({
+/app/dist/sessions-D8qGY7uC.js-1373-				catalogPluginId: options.catalogPluginId,
+/app/dist/sessions-D8qGY7uC.js-1374-				parsedCatalog: parsed,
+/app/dist/sessions-D8qGY7uC.js-1375-				pluginMetadataSnapshot: this.pluginMetadataSnapshot,
+/app/dist/sessions-D8qGY7uC.js-1376-				providers: config.providers
+/app/dist/sessions-D8qGY7uC.js-1377-			}) : config.providers;
+/app/dist/sessions-D8qGY7uC.js-1378-			const configForUse = {
+/app/dist/sessions-D8qGY7uC.js-1379-				...config,
+/app/dist/sessions-D8qGY7uC.js-1380-				providers
+/app/dist/sessions-D8qGY7uC.js-1381-			};
+/app/dist/sessions-D8qGY7uC.js-1382-			if (options.requireGeneratedCatalog === true && Object.keys(providers).length === 0) return emptyCustomModelsResult();
+/app/dist/sessions-D8qGY7uC.js-1383-			this.validateConfig(configForUse);
+/app/dist/sessions-D8qGY7uC.js-1384-			for (const [providerName, providerConfig] of Object.entries(configForUse.providers)) if ((providerConfig.models ?? []).length > 0) this.storeProviderRequestConfig(providerName, providerConfig);
+/app/dist/sessions-D8qGY7uC.js-1385-			const models = this.parseModels(configForUse);
+/app/dist/sessions-D8qGY7uC.js-1386-			const pluginCatalogErrors = [];
+/app/dist/sessions-D8qGY7uC.js-1387-			if (options.includePluginCatalogs !== false) for (const pluginCatalog of listPluginModelCatalogFiles(dirname(modelsJsonPath))) {
+/app/dist/sessions-D8qGY7uC.js-1388-				const pluginResult = this.loadCustomModels(pluginCatalog.path, {
+/app/dist/sessions-D8qGY7uC.js-1389-					catalogPluginId: pluginCatalog.pluginId,
+/app/dist/sessions-D8qGY7uC.js-1390-					includePluginCatalogs: false,
+/app/dist/sessions-D8qGY7uC.js-1391-					requireGeneratedCatalog: true
+/app/dist/sessions-D8qGY7uC.js-1392-				});
+/app/dist/sessions-D8qGY7uC.js-1393-				if (pluginResult.error) {
+/app/dist/sessions-D8qGY7uC.js-1394-					pluginCatalogErrors.push(pluginResult.error);
+/app/dist/sessions-D8qGY7uC.js-1395-					continue;
+/app/dist/sessions-D8qGY7uC.js-1396-				}
+/app/dist/sessions-D8qGY7uC.js-1397-				models.push(...pluginResult.models);
+/app/dist/sessions-D8qGY7uC.js-1398-			}
+/app/dist/sessions-D8qGY7uC.js-1399-			return {
+/app/dist/sessions-D8qGY7uC.js-1400-				models,
+/app/dist/sessions-D8qGY7uC.js-1401-				error: pluginCatalogErrors.join("\n\n") || void 0
+/app/dist/sessions-D8qGY7uC.js-1402-			};
+/app/dist/sessions-D8qGY7uC.js-1403-		} catch (error) {
+/app/dist/sessions-D8qGY7uC.js-1404-			if (error instanceof SyntaxError) {
+/app/dist/sessions-D8qGY7uC.js-1405-				if (options.requireGeneratedCatalog === true) return emptyCustomModelsResult();
+/app/dist/sessions-D8qGY7uC.js-1406-				return emptyCustomModelsResult(`Failed to parse models.json: ${error.message}\n\nFile: ${modelsJsonPath}`);
+/app/dist/sessions-D8qGY7uC.js-1407-			}
+/app/dist/sessions-D8qGY7uC.js-1408-			return emptyCustomModelsResult(`Failed to load models.json: ${error instanceof Error ? error.message : String(error)}\n\nFile: ${modelsJsonPath}`);
+/app/dist/sessions-D8qGY7uC.js-1409-		}
+/app/dist/sessions-D8qGY7uC.js-1410-	}
+/app/dist/sessions-D8qGY7uC.js-1411-	validateConfig(config) {
+/app/dist/sessions-D8qGY7uC.js-1412-		for (const [providerName, providerConfig] of Object.entries(config.providers)) {
+/app/dist/sessions-D8qGY7uC.js-1413-			const hasProviderApi = Boolean(providerConfig.api);
+/app/dist/sessions-D8qGY7uC.js-1414-			const models = providerConfig.models ?? [];
+/app/dist/sessions-D8qGY7uC.js-1415-			if (models.length === 0) continue;
+/app/dist/sessions-D8qGY7uC.js-1416-			if (!providerConfig.baseUrl) throw new Error(`Provider ${providerName}: "baseUrl" is required when defining custom models.`);
+/app/dist/sessions-D8qGY7uC.js-1417-			if (!providerConfig.apiKey && !allowsMissingProviderApiKey(providerConfig.auth)) throw new Error(`Provider ${providerName}: "apiKey" is required when defining custom models.`);
+/app/dist/sessions-D8qGY7uC.js-1418-			for (const modelDef of models) {
+/app/dist/sessions-D8qGY7uC.js-1419-				const hasModelApi = Boolean(modelDef.api);
+/app/dist/sessions-D8qGY7uC.js-1420-				if (!hasProviderApi && !hasModelApi) throw new Error(`Provider ${providerName}, model ${modelDef.id}: no "api" specified. Set at provider or model level.`);
+/app/dist/sessions-D8qGY7uC.js-1421-				if (!modelDef.id) throw new Error(`Provider ${providerName}: model missing "id"`);
+/app/dist/sessions-D8qGY7uC.js-1422-				if (modelDef.contextWindow !== void 0 && modelDef.contextWindow <= 0) throw new Error(`Provider ${providerName}, model ${modelDef.id}: invalid contextWindow`);
+/app/dist/sessions-D8qGY7uC.js-1423-				if (modelDef.maxTokens !== void 0 && modelDef.maxTokens <= 0) throw new Error(`Provider ${providerName}, model ${modelDef.id}: invalid maxTokens`);
+/app/dist/sessions-D8qGY7uC.js-1424-			}
+/app/dist/sessions-D8qGY7uC.js-1425-		}
+/app/dist/sessions-D8qGY7uC.js-1426-	}
+/app/dist/sessions-D8qGY7uC.js-1427-	parseModels(config) {
+/app/dist/sessions-D8qGY7uC.js-1428-		const models = [];
+/app/dist/sessions-D8qGY7uC.js-1429-		for (const [providerName, providerConfig] of Object.entries(config.providers)) {
+/app/dist/sessions-D8qGY7uC.js-1430-			const modelDefs = providerConfig.models ?? [];
+/app/dist/sessions-D8qGY7uC.js-1431-			if (modelDefs.length === 0) continue;
+/app/dist/sessions-D8qGY7uC.js-1432-			for (const modelDef of modelDefs) {
+/app/dist/sessions-D8qGY7uC.js-1433-				const api = modelDef.api ?? providerConfig.api;
+/app/dist/sessions-D8qGY7uC.js-1434-				if (!api) continue;
+/app/dist/sessions-D8qGY7uC.js-1435-				const baseUrl = modelDef.baseUrl ?? providerConfig.baseUrl;
+/app/dist/sessions-D8qGY7uC.js-1436-				if (!baseUrl) continue;
+/app/dist/sessions-D8qGY7uC.js-1437-				const compat = mergeCompat(providerConfig.compat, modelDef.compat);
+/app/dist/sessions-D8qGY7uC.js-1438-				this.storeModelHeaders(providerName, modelDef.id, modelDef.headers);
+/app/dist/sessions-D8qGY7uC.js-1439-				models.push({
+/app/dist/sessions-D8qGY7uC.js-1440-					id: modelDef.id,
+/app/dist/sessions-D8qGY7uC.js-1441-					name: modelDef.name ?? modelDef.id,
+/app/dist/sessions-D8qGY7uC.js-1442-					api,
+/app/dist/sessions-D8qGY7uC.js-1443-					provider: providerName,
+/app/dist/sessions-D8qGY7uC.js-1444-					baseUrl,
+/app/dist/sessions-D8qGY7uC.js-1445-					reasoning: modelDef.reasoning ?? false,
+/app/dist/sessions-D8qGY7uC.js-1446-					thinkingLevelMap: modelDef.thinkingLevelMap,
+/app/dist/sessions-D8qGY7uC.js-1447-					input: modelDef.input ?? ["text"],
+/app/dist/sessions-D8qGY7uC.js-1448-					cost: modelDef.cost ?? {
+/app/dist/sessions-D8qGY7uC.js-1449-						input: 0,
+/app/dist/sessions-D8qGY7uC.js-1450-						output: 0,
+/app/dist/sessions-D8qGY7uC.js-1451-						cacheRead: 0,
+/app/dist/sessions-D8qGY7uC.js-1452-						cacheWrite: 0
+/app/dist/sessions-D8qGY7uC.js-1453-					},
+/app/dist/sessions-D8qGY7uC.js-1454-					contextWindow: modelDef.contextWindow ?? 128e3,
+/app/dist/sessions-D8qGY7uC.js-1455-					maxTokens: modelDef.maxTokens ?? 16384,
+/app/dist/sessions-D8qGY7uC.js-1456-					params: modelDef.params,
+/app/dist/sessions-D8qGY7uC.js-1457-					headers: void 0,
+/app/dist/sessions-D8qGY7uC.js-1458-					compat
+/app/dist/sessions-D8qGY7uC.js-1459-				});
+/app/dist/sessions-D8qGY7uC.js-1460-			}
+/app/dist/sessions-D8qGY7uC.js-1461-		}
+/app/dist/sessions-D8qGY7uC.js-1462-		return models;
+/app/dist/sessions-D8qGY7uC.js-1463-	}
+/app/dist/sessions-D8qGY7uC.js-1464-	/**
+/app/dist/sessions-D8qGY7uC.js-1465-	* Get all configured models.
+/app/dist/sessions-D8qGY7uC.js-1466-	*/
+/app/dist/sessions-D8qGY7uC.js-1467-	getAll() {
+/app/dist/sessions-D8qGY7uC.js-1468-		return this.models;
+/app/dist/sessions-D8qGY7uC.js-1469-	}
+/app/dist/sessions-D8qGY7uC.js-1470-	/**
+/app/dist/sessions-D8qGY7uC.js-1471-	* Get only models that have auth configured.
+/app/dist/sessions-D8qGY7uC.js-1472-	* This is a fast check that doesn't refresh OAuth tokens.
+/app/dist/sessions-D8qGY7uC.js-1473-	*/
+/app/dist/sessions-D8qGY7uC.js-1474-	getAvailable() {
+/app/dist/sessions-D8qGY7uC.js-1475-		return this.models.filter((m) => this.hasConfiguredAuth(m));
+/app/dist/sessions-D8qGY7uC.js-1476-	}
+/app/dist/sessions-D8qGY7uC.js-1477-	/**
+/app/dist/sessions-D8qGY7uC.js-1478-	* Find a model by provider and ID.
+/app/dist/sessions-D8qGY7uC.js-1479-	*/
+/app/dist/sessions-D8qGY7uC.js-1480-	find(provider, modelId) {
+/app/dist/sessions-D8qGY7uC.js-1481-		return this.models.find((m) => m.provider === provider && m.id === modelId);
+/app/dist/sessions-D8qGY7uC.js-1482-	}
+/app/dist/sessions-D8qGY7uC.js-1483-	/**
+/app/dist/sessions-D8qGY7uC.js-1484-	* Get API key for a model.
+/app/dist/sessions-D8qGY7uC.js-1485-	*/
+/app/dist/sessions-D8qGY7uC.js-1486-	hasConfiguredAuth(model) {
+/app/dist/sessions-D8qGY7uC.js-1487-		return this.authStorage.hasAuth(model.provider) || this.providerRequestConfigs.get(model.provider)?.auth === "aws-sdk" || this.providerRequestConfigs.get(model.provider)?.apiKey !== void 0;
+/app/dist/sessions-D8qGY7uC.js-1488-	}
+/app/dist/sessions-D8qGY7uC.js-1489-	getModelRequestKey(provider, modelId) {
+/app/dist/sessions-D8qGY7uC.js-1490-		return `${provider}:${modelId}`;
+/app/dist/sessions-D8qGY7uC.js-1491-	}
+/app/dist/sessions-D8qGY7uC.js-1492-	storeProviderRequestConfig(providerName, config) {
+--
+/app/dist/sessions-D8qGY7uC.js-8579-		});
+/app/dist/sessions-D8qGY7uC.js-8580-	}
+/app/dist/sessions-D8qGY7uC.js-8581-	getRegisteredCommands() {
+/app/dist/sessions-D8qGY7uC.js-8582-		this.commandDiagnostics = [];
+/app/dist/sessions-D8qGY7uC.js-8583-		return this.resolveRegisteredCommands();
+/app/dist/sessions-D8qGY7uC.js-8584-	}
+/app/dist/sessions-D8qGY7uC.js-8585-	getCommandDiagnostics() {
+/app/dist/sessions-D8qGY7uC.js-8586-		return this.commandDiagnostics;
+/app/dist/sessions-D8qGY7uC.js-8587-	}
+/app/dist/sessions-D8qGY7uC.js-8588-	getCommand(name) {
+/app/dist/sessions-D8qGY7uC.js-8589-		return this.resolveRegisteredCommands().find((command) => command.invocationName === name);
+/app/dist/sessions-D8qGY7uC.js-8590-	}
+/app/dist/sessions-D8qGY7uC.js-8591-	/**
+/app/dist/sessions-D8qGY7uC.js-8592-	* Request a graceful shutdown. Called by extension tools and event handlers.
+/app/dist/sessions-D8qGY7uC.js-8593-	* The actual shutdown behavior is provided by the mode via bindExtensions().
+/app/dist/sessions-D8qGY7uC.js-8594-	*/
+/app/dist/sessions-D8qGY7uC.js-8595-	shutdown() {
+/app/dist/sessions-D8qGY7uC.js-8596-		this.shutdownHandler();
+/app/dist/sessions-D8qGY7uC.js-8597-	}
+/app/dist/sessions-D8qGY7uC.js-8598-	/**
+/app/dist/sessions-D8qGY7uC.js-8599-	* Create an ExtensionContext for use in event handlers and tool execution.
+/app/dist/sessions-D8qGY7uC.js-8600-	* Context values are resolved at call time, so changes via bindCore/bindUI are reflected.
+/app/dist/sessions-D8qGY7uC.js-8601-	*/
+/app/dist/sessions-D8qGY7uC.js-8602-	createContext() {
+/app/dist/sessions-D8qGY7uC.js-8603-		const assertActive = () => this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8604-		const getModel = this.getModel;
+/app/dist/sessions-D8qGY7uC.js-8605-		const getUiContext = () => this.uiContext;
+/app/dist/sessions-D8qGY7uC.js-8606-		const hasUiContext = () => this.hasUI();
+/app/dist/sessions-D8qGY7uC.js-8607-		const getCwd = () => this.cwd;
+/app/dist/sessions-D8qGY7uC.js-8608-		const getSessionManager = () => this.sessionManager;
+/app/dist/sessions-D8qGY7uC.js:8609:		const getModelRegistry = () => this.modelRegistry;
+/app/dist/sessions-D8qGY7uC.js-8610-		const isIdle = () => this.isIdleFn();
+/app/dist/sessions-D8qGY7uC.js-8611-		const getSignal = () => this.getSignalFn();
+/app/dist/sessions-D8qGY7uC.js-8612-		const abort = () => this.abortFn();
+/app/dist/sessions-D8qGY7uC.js-8613-		const hasPendingMessages = () => this.hasPendingMessagesFn();
+/app/dist/sessions-D8qGY7uC.js-8614-		const shutdown = () => this.shutdownHandler();
+/app/dist/sessions-D8qGY7uC.js-8615-		const getContextUsage = () => this.getContextUsageFn();
+/app/dist/sessions-D8qGY7uC.js-8616-		const compact = (options) => this.compactFn(options);
+/app/dist/sessions-D8qGY7uC.js-8617-		const getSystemPrompt = () => this.getSystemPromptFn();
+/app/dist/sessions-D8qGY7uC.js-8618-		return {
+/app/dist/sessions-D8qGY7uC.js-8619-			get ui() {
+/app/dist/sessions-D8qGY7uC.js-8620-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8621-				return getUiContext();
+/app/dist/sessions-D8qGY7uC.js-8622-			},
+/app/dist/sessions-D8qGY7uC.js-8623-			get hasUI() {
+/app/dist/sessions-D8qGY7uC.js-8624-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8625-				return hasUiContext();
+/app/dist/sessions-D8qGY7uC.js-8626-			},
+/app/dist/sessions-D8qGY7uC.js-8627-			get cwd() {
+/app/dist/sessions-D8qGY7uC.js-8628-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8629-				return getCwd();
+/app/dist/sessions-D8qGY7uC.js-8630-			},
+/app/dist/sessions-D8qGY7uC.js-8631-			get sessionManager() {
+/app/dist/sessions-D8qGY7uC.js-8632-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8633-				return getSessionManager();
+/app/dist/sessions-D8qGY7uC.js-8634-			},
+/app/dist/sessions-D8qGY7uC.js-8635-			get modelRegistry() {
+/app/dist/sessions-D8qGY7uC.js-8636-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8637-				return getModelRegistry();
+/app/dist/sessions-D8qGY7uC.js-8638-			},
+/app/dist/sessions-D8qGY7uC.js-8639-			get model() {
+/app/dist/sessions-D8qGY7uC.js-8640-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8641-				return getModel();
+/app/dist/sessions-D8qGY7uC.js-8642-			},
+/app/dist/sessions-D8qGY7uC.js-8643-			isIdle: () => {
+/app/dist/sessions-D8qGY7uC.js-8644-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8645-				return isIdle();
+/app/dist/sessions-D8qGY7uC.js-8646-			},
+/app/dist/sessions-D8qGY7uC.js-8647-			get signal() {
+/app/dist/sessions-D8qGY7uC.js-8648-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8649-				return getSignal();
+/app/dist/sessions-D8qGY7uC.js-8650-			},
+/app/dist/sessions-D8qGY7uC.js-8651-			abort: () => {
+/app/dist/sessions-D8qGY7uC.js-8652-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8653-				abort();
+/app/dist/sessions-D8qGY7uC.js-8654-			},
+/app/dist/sessions-D8qGY7uC.js-8655-			hasPendingMessages: () => {
+/app/dist/sessions-D8qGY7uC.js-8656-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8657-				return hasPendingMessages();
+/app/dist/sessions-D8qGY7uC.js-8658-			},
+/app/dist/sessions-D8qGY7uC.js-8659-			shutdown: () => {
+/app/dist/sessions-D8qGY7uC.js-8660-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8661-				shutdown();
+/app/dist/sessions-D8qGY7uC.js-8662-			},
+/app/dist/sessions-D8qGY7uC.js-8663-			getContextUsage: () => {
+/app/dist/sessions-D8qGY7uC.js-8664-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8665-				return getContextUsage();
+/app/dist/sessions-D8qGY7uC.js-8666-			},
+/app/dist/sessions-D8qGY7uC.js-8667-			compact: (options) => {
+/app/dist/sessions-D8qGY7uC.js-8668-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8669-				compact(options);
+/app/dist/sessions-D8qGY7uC.js-8670-			},
+/app/dist/sessions-D8qGY7uC.js-8671-			getSystemPrompt: () => {
+/app/dist/sessions-D8qGY7uC.js-8672-				assertActive();
+/app/dist/sessions-D8qGY7uC.js-8673-				return getSystemPrompt();
+/app/dist/sessions-D8qGY7uC.js-8674-			}
+/app/dist/sessions-D8qGY7uC.js-8675-		};
+/app/dist/sessions-D8qGY7uC.js-8676-	}
+/app/dist/sessions-D8qGY7uC.js-8677-	createCommandContext() {
+/app/dist/sessions-D8qGY7uC.js-8678-		const context = Object.defineProperties({}, Object.getOwnPropertyDescriptors(this.createContext()));
+/app/dist/sessions-D8qGY7uC.js-8679-		context.waitForIdle = () => {
+/app/dist/sessions-D8qGY7uC.js-8680-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8681-			return this.waitForIdleFn();
+/app/dist/sessions-D8qGY7uC.js-8682-		};
+/app/dist/sessions-D8qGY7uC.js-8683-		context.newSession = (options) => {
+/app/dist/sessions-D8qGY7uC.js-8684-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8685-			return this.newSessionHandler(options);
+/app/dist/sessions-D8qGY7uC.js-8686-		};
+/app/dist/sessions-D8qGY7uC.js-8687-		context.fork = (entryId, options) => {
+/app/dist/sessions-D8qGY7uC.js-8688-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8689-			return this.forkHandler(entryId, options);
+/app/dist/sessions-D8qGY7uC.js-8690-		};
+/app/dist/sessions-D8qGY7uC.js-8691-		context.navigateTree = (targetId, options) => {
+/app/dist/sessions-D8qGY7uC.js-8692-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8693-			return this.navigateTreeHandler(targetId, options);
+/app/dist/sessions-D8qGY7uC.js-8694-		};
+/app/dist/sessions-D8qGY7uC.js-8695-		context.switchSession = (sessionPath, options) => {
+/app/dist/sessions-D8qGY7uC.js-8696-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8697-			return this.switchSessionHandler(sessionPath, options);
+/app/dist/sessions-D8qGY7uC.js-8698-		};
+/app/dist/sessions-D8qGY7uC.js-8699-		context.reload = () => {
+/app/dist/sessions-D8qGY7uC.js-8700-			this.assertActive();
+/app/dist/sessions-D8qGY7uC.js-8701-			return this.reloadHandler();
+/app/dist/sessions-D8qGY7uC.js-8702-		};
+/app/dist/sessions-D8qGY7uC.js-8703-		return context;
+/app/dist/sessions-D8qGY7uC.js-8704-	}
+/app/dist/sessions-D8qGY7uC.js-8705-	isSessionBeforeEvent(event) {
+/app/dist/sessions-D8qGY7uC.js-8706-		return event.type === "session_before_switch" || event.type === "session_before_fork" || event.type === "session_before_compact" || event.type === "session_before_tree";
+/app/dist/sessions-D8qGY7uC.js-8707-	}
+/app/dist/sessions-D8qGY7uC.js-8708-	async emit(event) {
+/app/dist/sessions-D8qGY7uC.js-8709-		const ctx = this.createContext();
+/app/dist/sessions-D8qGY7uC.js-8710-		let result;
+/app/dist/sessions-D8qGY7uC.js-8711-		for (const ext of this.extensions) {
+/app/dist/sessions-D8qGY7uC.js-8712-			const handlers = ext.handlers.get(event.type);
+/app/dist/sessions-D8qGY7uC.js-8713-			if (!handlers || handlers.length === 0) continue;
+/app/dist/sessions-D8qGY7uC.js-8714-			for (const handler of handlers) try {
+/app/dist/sessions-D8qGY7uC.js-8715-				const handlerResult = await handler(event, ctx);
+/app/dist/sessions-D8qGY7uC.js-8716-				if (this.isSessionBeforeEvent(event) && handlerResult) {
+/app/dist/sessions-D8qGY7uC.js-8717-					result = handlerResult;
+/app/dist/sessions-D8qGY7uC.js-8718-					if (result.cancel) return result;
+/app/dist/sessions-D8qGY7uC.js-8719-				}
+/app/dist/sessions-D8qGY7uC.js-8720-			} catch (err) {
+/app/dist/sessions-D8qGY7uC.js-8721-				const message = err instanceof Error ? err.message : String(err);
+/app/dist/sessions-D8qGY7uC.js-8722-				const stack = err instanceof Error ? err.stack : void 0;
+/app/dist/sessions-D8qGY7uC.js-8723-				this.emitError({
+/app/dist/sessions-D8qGY7uC.js-8724-					extensionPath: ext.path,
+/app/dist/sessions-D8qGY7uC.js-8725-					event: event.type,
+/app/dist/sessions-D8qGY7uC.js-8726-					error: message,
+/app/dist/sessions-D8qGY7uC.js-8727-					stack
+/app/dist/sessions-D8qGY7uC.js-8728-				});
+/app/dist/sessions-D8qGY7uC.js-8729-			}
+/app/dist/sessions-D8qGY7uC.js-8730-		}
+/app/dist/sessions-D8qGY7uC.js-8731-		return result;
+/app/dist/sessions-D8qGY7uC.js-8732-	}
+/app/dist/sessions-D8qGY7uC.js-8733-	async emitMessageEnd(event) {
+/app/dist/sessions-D8qGY7uC.js-8734-		const ctx = this.createContext();
+/app/dist/sessions-D8qGY7uC.js-8735-		let currentMessage = event.message;
+/app/dist/sessions-D8qGY7uC.js-8736-		let modified = false;
+/app/dist/sessions-D8qGY7uC.js-8737-		for (const ext of this.extensions) {
+/app/dist/sessions-D8qGY7uC.js-8738-			const handlers = ext.handlers.get("message_end");
+/app/dist/sessions-D8qGY7uC.js-8739-			if (!handlers || handlers.length === 0) continue;
+/app/dist/sessions-D8qGY7uC.js-8740-			for (const handler of handlers) try {
+/app/dist/sessions-D8qGY7uC.js-8741-				const handlerResult = await handler({
+/app/dist/sessions-D8qGY7uC.js-8742-					...event,
+/app/dist/sessions-D8qGY7uC.js-8743-					message: currentMessage
+/app/dist/sessions-D8qGY7uC.js-8744-				}, ctx);
+/app/dist/sessions-D8qGY7uC.js-8745-				if (!handlerResult?.message) continue;
+/app/dist/sessions-D8qGY7uC.js-8746-				if (handlerResult.message.role !== currentMessage.role) {
+/app/dist/sessions-D8qGY7uC.js-8747-					this.emitError({
+/app/dist/sessions-D8qGY7uC.js-8748-						extensionPath: ext.path,
+/app/dist/sessions-D8qGY7uC.js-8749-						event: "message_end",
+/app/dist/sessions-D8qGY7uC.js-8750-						error: "message_end handlers must return a message with the same role"
+/app/dist/sessions-D8qGY7uC.js-8751-					});
+/app/dist/sessions-D8qGY7uC.js-8752-					continue;
+/app/dist/sessions-D8qGY7uC.js-8753-				}
+/app/dist/sessions-D8qGY7uC.js-8754-				currentMessage = handlerResult.message;
