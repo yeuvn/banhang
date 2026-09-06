@@ -1,120 +1,78 @@
 aihome@AIHome:~$ cd /opt/aihome-test/source
-
-echo '=== BRANCH / COMMIT ==='
-git branch --show-current
-git log -1 --oneline
-
-echo
-echo '=== REMOTE ==='
-git fetch origin
-git log origin/Openclaw-Test -3 --oneline
-
-echo
-echo '=== LOCAL CHANGES ==='
-git status --short
-
-echo
-echo '=== DIFF WORKFLOW ==='
-git diff -- .github/workflows/openclaw-test-box-deploy.yml
-
-echo
-echo '=== DIFF NHATKY-OPENCLAW ==='
-git diff -- NhatKy-OpenClaw.txt
-
-echo
-git diff -- config/openclaw/openclaw.json5
-=== BRANCH / COMMIT ===
-Openclaw-Test
-c026d24 (HEAD -> Openclaw-Test) Configure TEST Gemini API key via host secret env file
-
-=== REMOTE ===
-fdfab99 (origin/Openclaw-Test) Enable KIRA file tools in OpenClaw TEST; keep Gemini 3.6 enabled
-4efcedf Update OpenClaw TEST progress after Actions #18 PASS
-9a77c88 Restore OpenClaw TEST baseline configuration
-
-=== LOCAL CHANGES ===
- M .github/workflows/openclaw-test-box-deploy.yml
- M NhatKy-OpenClaw.txt
- M config/openclaw/openclaw.json5
-
-=== DIFF WORKFLOW ===
-diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
-index 2d3825c..8b08623 100644
---- a/.github/workflows/openclaw-test-box-deploy.yml
-+++ b/.github/workflows/openclaw-test-box-deploy.yml
-@@ -20,10 +20,11 @@ jobs:
-       - linux
-       - x64
-       - aihome-box-test
--    timeout-minutes: 15
-+    timeout-minutes: 20
-     env:
-       EXPECTED_BRANCH: Openclaw-Test
-       SOURCE_DIR: /opt/aihome-test/source
-+      MODEL: google/gemini-3.6-flash
- 
-     steps:
-       - name: Checkout Openclaw-Test
-@@ -52,18 +53,15 @@ jobs:
-           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
-           grep -Fq 'google:' config/openclaw/openclaw.json5
-           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
--          echo 'MODEL=google/gemini-3.6-flash'
+aihome@AIHome:/opt/aihome-test/source$ git diff --stat
+ .github/workflows/openclaw-test-box-deploy.yml | 40 +++++++++----
+ NhatKy-OpenClaw.txt                            | 78 +++++++++++++-------------
+ config/openclaw/openclaw.json5                 | 39 +++++++++++--
+ 3 files changed, 103 insertions(+), 54 deletions(-)
+aihome@AIHome:/opt/aihome-test/source$ git diff -- NhatKy-OpenClaw.txt config/openclaw/openclaw.json5
+diff --git a/NhatKy-OpenClaw.txt b/NhatKy-OpenClaw.txt
+index d955571..dbce537 100644
+--- a/NhatKy-OpenClaw.txt
++++ b/NhatKy-OpenClaw.txt
+@@ -53,55 +53,43 @@ VI. CAPABILITY ƯU TIÊN — CHỨC NĂNG TOOL CHI TIẾT
+ 1. Chat/hội thoại
+    - Nhận yêu cầu người dùng, duy trì ngữ cảnh phiên và tạo câu trả lời qua provider/model được policy cho phép.
+    - Không tự cấp quyền thực thi hệ thống; chat chỉ được gọi các tool đã được allowlist.
+-
+ 2. Memory — `group:memory`
+    - Đọc memory cục bộ đã được lưu để trả lời thông tin riêng của người dùng/ngôi nhà.
+    - Ghi memory khi có yêu cầu lưu thông tin theo cơ chế memory được phê duyệt.
+    - Không được dùng memory tool để thực thi lệnh hệ điều hành, truy cập tùy ý filesystem hoặc gọi mạng.
+    - Memory read/write phải đi qua storage path đã được định nghĩa; không biến thành arbitrary filesystem access.
+-
+ 3. Session status — `session_status`
+    - Trả về trạng thái phiên/runtime ở phạm vi mà tool cho phép.
+    - Dùng để kiểm tra context/session health, không dùng để thực thi command, đ:...skipping...
+diff --git a/NhatKy-OpenClaw.txt b/NhatKy-OpenClaw.txt
+index d955571..dbce537 100644
+--- a/NhatKy-OpenClaw.txt
++++ b/NhatKy-OpenClaw.txt
+@@ -53,55 +53,43 @@ VI. CAPABILITY ƯU TIÊN — CHỨC NĂNG TOOL CHI TIẾT
+ 1. Chat/hội thoại
+    - Nhận yêu cầu người dùng, duy trì ngữ cảnh phiên và tạo câu trả lời qua provider/model được policy cho phép.
+    - Không tự cấp quyền thực thi hệ thống; chat chỉ được gọi các tool đã được allowlist.
+-
+ 2. Memory — `group:memory`
+    - Đọc memory cục bộ đã được lưu để trả lời thông tin riêng của người dùng/ngôi nhà.
+    - Ghi memory khi có yêu cầu lưu thông tin theo cơ chế memory được phê duyệt.
+    - Không được dùng memory tool để thực thi lệnh hệ điều hành, truy cập tùy ý filesystem hoặc gọi mạng.
+    - Memory read/write phải đi qua storage path đã được định nghĩa; không biến thành arbitrary filesystem access.
+-
+ 3. Session status — `session_status`
+    - Trả về trạng thái phiên/runtime ở phạm vi mà tool cho phép.
+    - Dùng để kiểm tra context/session health, không dùng để thực thi command, đọc file tùy ý hoặc quản trị gateway.
+-
+ 4. Home Assistant read — `ha_get_state` (chưa bật)
+    - Đọc trạng thái hiện tại của đúng một `entity_id` đã nằm trong allowlist.
 :...skipping...
-diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
-index 2d3825c..8b08623 100644
---- a/.github/workflows/openclaw-test-box-deploy.yml
-+++ b/.github/workflows/openclaw-test-box-deploy.yml
-@@ -20,10 +20,11 @@ jobs:
-       - linux
-       - x64
-       - aihome-box-test
--    timeout-minutes: 15
-+    timeout-minutes: 20
-     env:
-       EXPECTED_BRANCH: Openclaw-Test
-       SOURCE_DIR: /opt/aihome-test/source
-+      MODEL: google/gemini-3.6-flash
- 
-     steps:
-       - name: Checkout Openclaw-Test
-@@ -52,18 +53,15 @@ jobs:
-           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
-           grep -Fq 'google:' config/openclaw/openclaw.json5
-           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
--          echo 'MODEL=google/gemini-3.6-flash'
-+          echo "MODEL=${MODEL}"
-           echo 'FALLBACKS=[]'
-:...skipping...
-diff --git a/.github/workflows/openclaw-test-box-deploy.yml b/.github/workflows/openclaw-test-box-deploy.yml
-index 2d3825c..8b08623 100644
---- a/.github/workflows/openclaw-test-box-deploy.yml
-+++ b/.github/workflows/openclaw-test-box-deploy.yml
-@@ -20,10 +20,11 @@ jobs:
-       - linux
-       - x64
-       - aihome-box-test
--    timeout-minutes: 15
-+    timeout-minutes: 20
-     env:
-       EXPECTED_BRANCH: Openclaw-Test
-       SOURCE_DIR: /opt/aihome-test/source
-+      MODEL: google/gemini-3.6-flash
- 
-     steps:
-       - name: Checkout Openclaw-Test
-@@ -52,18 +53,15 @@ jobs:
-           grep -Fq 'allow: ["google"]' config/openclaw/openclaw.json5
-           grep -Fq 'google:' config/openclaw/openclaw.json5
-           ! grep -Fq 'GEMINI_API_KEY' compose/openclaw.yml
--          echo 'MODEL=google/gemini-3.6-flash'
-+          echo "MODEL=${MODEL}"
-           echo 'FALLBACKS=[]'
-           echo 'PROVIDER_PLUGIN=google'
--          echo 'GEMINI_API_KEY_ENV=NOT_CONFIGURED'
-+          echo 'GEMINI_API_KEY_ENV=INJECTED_AT_RUNTIME'
- 
-       - name: Sync Openclaw-Test to TEST source
-         shell: bash
-         run: |
+diff --git a/NhatKy-OpenClaw.txt b/NhatKy-OpenClaw.txt
+index d955571..dbce537 100644
+--- a/NhatKy-OpenClaw.txt
++++ b/NhatKy-OpenClaw.txt
+@@ -53,55 +53,43 @@ VI. CAPABILITY ƯU TIÊN — CHỨC NĂNG TOOL CHI TIẾT
+ 1. Chat/hội thoại
+    - Nhận yêu cầu người dùng, duy trì ngữ cảnh phiên và tạo câu trả lời qua provider/model được policy cho phép.
+    - Không tự cấp quyền thực thi hệ thống; chat chỉ được gọi các tool đã được allowlist.
+-
+ 2. Memory — `group:memory`
+    - Đọc memory cục bộ đã được lưu để trả lời thông tin riêng của người dùng/ngôi nhà.
+    - Ghi memory khi có yêu cầu lưu thông tin theo cơ chế memory được phê duyệt.
+    - Không được dùng memory tool để thực thi lệnh hệ điều hành, truy cập tùy ý filesystem hoặc gọi mạng.
+    - Memory read/write phải đi qua storage path đã được định nghĩa; không biến thành arbitrary filesystem access.
+-
+ 3. Session status — `session_status`
+    - Trả về trạng thái phiên/runtime ở phạm vi mà tool cho phép.
+    - Dùng để kiểm tra context/session health, không dùng để thực thi command, đọc file tùy ý hoặc quản trị gateway.
+-
+ 4. Home Assistant read — `ha_get_state` (chưa bật)
+    - Đọc trạng thái hiện tại của đúng một `entity_id` đã nằm trong allowlist.
+    - Chỉ trả về state và các attribute đã được chọn trước.
+    - Không discovery entity tùy ý; không gọi service; không sửa cấu hình; không truy cập URL tùy ý.
+-
+ 5. Home Assistant light/device ON — `ha_turn_on` (chưa bật)
+    - Bật đúng một entity đã được cho phép.
+    - Adapter chỉ thực hiện operation `turn_on` cố định.
+    - Không nhận `domain`, `service` hoặc `service_data` tùy ý từ model.
+-
+ 6. Home Assistant light/device OFF — `ha_turn_off` (chưa bật)
 :
